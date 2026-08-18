@@ -337,3 +337,38 @@ if IS_VERCEL:
         },
     },
 }
+
+
+if IS_VERCEL and MONGO_CONNECTED:
+    try:
+        from django.contrib.auth.models import User
+        
+        # Sincronizar usuarios de MongoDB a Django
+        db = MONGO_DB
+        users_collection = db['users']
+        
+        mongo_users = list(users_collection.find({}))
+        
+        for mongo_user in mongo_users:
+            username = mongo_user.get('username')
+            if username:
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={
+                        'email': mongo_user.get('email', ''),
+                        'first_name': mongo_user.get('first_name', ''),
+                        'last_name': mongo_user.get('last_name', ''),
+                        'is_active': mongo_user.get('is_active', True),
+                        'is_staff': mongo_user.get('is_staff', False),
+                        'is_superuser': mongo_user.get('is_superuser', False),
+                    }
+                )
+                if created:
+                    user.set_unusable_password()
+                    user.save()
+                    print(f"Sincronizado usuario: {username}")
+        
+        print(f"Sincronización completa: {len(mongo_users)} usuarios")
+        
+    except Exception as e:
+        print(f"Error sincronizando usuarios: {e}")
