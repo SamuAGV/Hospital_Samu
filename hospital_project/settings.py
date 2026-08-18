@@ -3,10 +3,9 @@ Django settings for hospital_project project.
 """
 
 import os
-import certifi
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
-import pymongo
 
 # Cargar variables de entorno
 load_dotenv()
@@ -18,9 +17,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'  # Cambiado a False por defecto
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -85,8 +84,6 @@ WSGI_APPLICATION = 'hospital_project.wsgi.application'
 # ============================================================
 # DATABASE - Configuración para Django (SQLite para sesiones)
 # ============================================================
-# Django necesita una base de datos SQL para sesiones y autenticación
-# Usamos SQLite que es ligera y no requiere configuración adicional
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -100,34 +97,39 @@ DATABASES = {
 MONGO_URI = os.getenv('MONGO_URI')
 MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'medinsight_hospital')
 
-# Connection to MongoDB con certifi para SSL
-try:
-    if MONGO_URI and 'mongodb+srv' in MONGO_URI:
-        # Conexión a MongoDB Atlas
-        mongo_client = pymongo.MongoClient(
-            MONGO_URI,
-            tlsCAFile=certifi.where(),
-            serverSelectionTimeoutMS=10000
-        )
-    else:
-        # Conexión local (sin SSL)
-        mongo_client = pymongo.MongoClient(
-            MONGO_URI or 'mongodb://localhost:27017/',
-            serverSelectionTimeoutMS=10000
-        )
-    
-    # Probar conexión
-    mongo_client.admin.command('ping')
-    mongo_db = mongo_client[MONGO_DB_NAME]
-    MONGO_CONNECTED = True
-    print(f"Conectado a MongoDB: {MONGO_DB_NAME}")
-except Exception as e:
-    MONGO_CONNECTED = False
-    print(f"Error al conectar a MongoDB: {e}")
-    print("Verifica tu conexión a Internet y las credenciales en .env")
-    # Crear una conexión dummy para evitar errores
-    mongo_client = None
-    mongo_db = None
+# Variables globales para MongoDB
+mongo_client = None
+mongo_db = None
+MONGO_CONNECTED = False
+
+# Solo intentar conectar si no estamos en Vercel o en entorno de construcción
+IS_VERCEL = os.environ.get('VERCEL', False)
+IS_BUILDING = 'build' in sys.argv or 'collectstatic' in sys.argv
+
+if not IS_VERCEL and not IS_BUILDING:
+    try:
+        import certifi
+        import pymongo
+        
+        if MONGO_URI and 'mongodb+srv' in MONGO_URI:
+            mongo_client = pymongo.MongoClient(
+                MONGO_URI,
+                tlsCAFile=certifi.where(),
+                serverSelectionTimeoutMS=10000
+            )
+        elif MONGO_URI:
+            mongo_client = pymongo.MongoClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=10000
+            )
+        
+        if mongo_client:
+            mongo_client.admin.command('ping')
+            mongo_db = mongo_client[MONGO_DB_NAME]
+            MONGO_CONNECTED = True
+    except Exception:
+        # Silenciar errores en producción
+        pass
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -174,5 +176,5 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-# Session configuration (usar SQLite para sesiones)
+# Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
