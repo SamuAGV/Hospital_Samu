@@ -339,10 +339,12 @@ if IS_VERCEL:
 }
 
 # ============================================================
-# CONFIGURACIÓN PARA VERCEL - Ejecutar migraciones y sincronizar
+# CONFIGURACIÓN PARA VERCEL
 # ============================================================
 if IS_VERCEL:
-    # Verificar y crear tablas si no existen
+    print("Ejecutando en Vercel...", file=sys.stderr)
+    
+    # Forzar migraciones en el inicio
     try:
         from django.db import connection
         from django.core.management import call_command
@@ -353,40 +355,37 @@ if IS_VERCEL:
             table_exists = cursor.fetchone()
         
         if not table_exists:
-            print("Creando tablas de Django en Vercel...")
-            call_command('migrate', interactive=False)
-            print("Migraciones completadas")
+            print("Ejecutando migraciones en settings...", file=sys.stderr)
+            call_command('migrate', interactive=False, verbosity=1)
+            print("Migraciones completadas en settings", file=sys.stderr)
             
-            # Sincronizar usuarios de MongoDB a Django
+            # Sincronizar usuarios de MongoDB
             if MONGO_CONNECTED and MONGO_DB is not None:
-                print("Sincronizando usuarios de MongoDB a Django...")
+                print("Sincronizando usuarios en settings...", file=sys.stderr)
                 db = MONGO_DB
                 users_collection = db['users']
+                from django.contrib.auth.models import User
                 
                 mongo_users = list(users_collection.find({}))
-                for mongo_user in mongo_users:
-                    username = mongo_user.get('username')
+                for user_data in mongo_users:
+                    username = user_data.get('username')
                     if username:
-                        try:
-                            from django.contrib.auth.models import User
-                            user, created = User.objects.get_or_create(
-                                username=username,
-                                defaults={
-                                    'email': mongo_user.get('email', ''),
-                                    'first_name': mongo_user.get('first_name', ''),
-                                    'last_name': mongo_user.get('last_name', ''),
-                                    'is_active': mongo_user.get('is_active', True),
-                                    'is_staff': mongo_user.get('is_staff', False),
-                                    'is_superuser': mongo_user.get('is_superuser', False),
-                                }
-                            )
-                            if created:
-                                user.set_unusable_password()
-                                user.save()
-                                print(f'Usuario creado en Django: {username}')
-                        except Exception as e:
-                            print(f'⚠️ Error con usuario {username}: {e}')
-                
-                print(f'Total usuarios en Django: {User.objects.count()}')
+                        user, created = User.objects.get_or_create(
+                            username=username,
+                            defaults={
+                                'email': user_data.get('email', ''),
+                                'first_name': user_data.get('first_name', ''),
+                                'last_name': user_data.get('last_name', ''),
+                                'is_active': user_data.get('is_active', True),
+                                'is_staff': user_data.get('is_staff', False),
+                                'is_superuser': user_data.get('is_superuser', False),
+                            }
+                        )
+                        if created:
+                            user.set_unusable_password()
+                            user.save()
+                            print(f'Usuario sincronizado: {username}', file=sys.stderr)
+                print(f'Total usuarios: {User.objects.count()}', file=sys.stderr)
     except Exception as e:
-        print(f"⚠️ Error en configuración de Vercel: {e}")
+        print(f"⚠️ Error en configuración de Vercel: {e}", file=sys.stderr)
+
