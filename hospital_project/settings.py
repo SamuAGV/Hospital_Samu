@@ -17,9 +17,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'  # Cambiado a False por defecto
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app').split(',')
+# ============================================================
+# ALLOWED_HOSTS - Configuración para Vercel y desarrollo
+# ============================================================
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Detectar si estamos en Vercel
+IS_VERCEL = os.environ.get('VERCEL', False)
+IS_BUILDING = 'build' in sys.argv or 'collectstatic' in sys.argv
+
+# Agregar dominios de Vercel automáticamente
+if IS_VERCEL:
+    # Dominios de Vercel
+    vercel_url = os.environ.get('VERCEL_URL', '')
+    if vercel_url:
+        ALLOWED_HOSTS.append(vercel_url)
+        ALLOWED_HOSTS.append(f'{vercel_url}.vercel.app')
+    
+    deployment_url = os.environ.get('VERCEL_DEPLOYMENT_URL', '')
+    if deployment_url:
+        ALLOWED_HOSTS.append(deployment_url)
+    
+    # Permitir todos los subdominios de vercel.app
+    ALLOWED_HOSTS.append('.vercel.app')
+    
+    # Tu dominio específico
+    ALLOWED_HOSTS.append('hospital-samu.vercel.app')
 
 # Application definition
 INSTALLED_APPS = [
@@ -103,40 +128,56 @@ mongo_db = None
 MONGO_CONNECTED = False
 
 # Solo intentar conectar si no estamos en Vercel o en entorno de construcción
-IS_VERCEL = os.environ.get('VERCEL', False)
-IS_BUILDING = 'build' in sys.argv or 'collectstatic' in sys.argv
-
 if not IS_VERCEL and not IS_BUILDING:
     try:
         import certifi
         import pymongo
         
-        if MONGO_URI and 'mongodb+srv' in MONGO_URI:
-            mongo_client = pymongo.MongoClient(
-                MONGO_URI,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=10000
-            )
-        elif MONGO_URI:
-            mongo_client = pymongo.MongoClient(
-                MONGO_URI,
-                serverSelectionTimeoutMS=10000
-            )
-        
-        if mongo_client:
-            mongo_client.admin.command('ping')
-            mongo_db = mongo_client[MONGO_DB_NAME]
-            MONGO_CONNECTED = True
-    except Exception:
+        if MONGO_URI:
+            if 'mongodb+srv' in MONGO_URI:
+                # Conexión a MongoDB Atlas
+                mongo_client = pymongo.MongoClient(
+                    MONGO_URI,
+                    tlsCAFile=certifi.where(),
+                    serverSelectionTimeoutMS=10000
+                )
+            else:
+                # Conexión local
+                mongo_client = pymongo.MongoClient(
+                    MONGO_URI,
+                    serverSelectionTimeoutMS=10000
+                )
+            
+            # Probar conexión
+            if mongo_client:
+                mongo_client.admin.command('ping')
+                mongo_db = mongo_client[MONGO_DB_NAME]
+                MONGO_CONNECTED = True
+                # Solo imprimir en desarrollo, no en producción
+                if not IS_VERCEL:
+                    print(f"Conectado a MongoDB: {MONGO_DB_NAME}")
+    except Exception as e:
         # Silenciar errores en producción
-        pass
+        if not IS_VERCEL:
+            print(f"Error al conectar a MongoDB: {e}")
+        MONGO_CONNECTED = False
+        mongo_client = None
+        mongo_db = None
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 # Internationalization
@@ -176,5 +217,61 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-# Session configuration
+# Session configuration (usar SQLite para sesiones)
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# ============================================================
+# CONFIGURACIÓN ADICIONAL PARA PRODUCCIÓN EN VERCEL
+# ============================================================
+
+# Configuración de seguridad para producción
+if IS_VERCEL:
+    # Forzar HTTPS en producción
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # Headers de seguridad
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookies seguras
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Prevenir que el navegador adivine el tipo de contenido
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Política de referencia
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+# Configuración para servir archivos estáticos en Vercel
+if IS_VERCEL:
+    # En Vercel, los archivos estáticos se sirven desde /staticfiles
+    STATIC_URL = '/static/'
+    STATIC_ROOT = '/tmp/staticfiles'  # Vercel usa /tmp para escritura
+else:
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Logging en producción (opcional pero recomendado)
+if not DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+                'propagate': False,
+            },
+        },
+    }
