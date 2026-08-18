@@ -296,27 +296,44 @@ MONGO_DB = mongo_db
 # Configuración de logging para Vercel
 if IS_VERCEL:
     LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
-        'root': {
+    },
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} - {name}: {message}',
+            'style': '{',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'apps.users.backends': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
         },
-        'loggers': {
-            'apps.users.backends': {
-                'handlers': ['console'],
-                'level': 'INFO',
-                'propagate': True,
-            },
-            'django': {
-                'handlers': ['console'],
-                'level': 'INFO',
-                'propagate': False,
-            },
+        'apps.users.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
         },
-    }
+        'django.contrib.auth': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

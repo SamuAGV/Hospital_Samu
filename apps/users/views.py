@@ -8,9 +8,16 @@ from django.contrib.auth.models import User
 import hashlib
 import re
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
+
 
 def login_view(request):
     """Vista de inicio de sesión."""
+    logger.info("=" * 50)
+    logger.info("Vista de login iniciada")
+    logger.info(f"Usuario autenticado: {request.user.is_authenticated}")
+    
     if request.user.is_authenticated:
         return redirect('core:dashboard')
     
@@ -18,16 +25,23 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
+        logger.info(f"Intento de login para usuario: {username}")
+        logger.info(f"MONGO_CONNECTED: {settings.MONGO_CONNECTED}")
+        logger.info(f"MONGO_DB: {settings.MONGO_DB}")
+        
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
+            logger.info(f"Login exitoso para: {username}")
             messages.success(request, f'¡Bienvenido {user.username}!')
             return redirect('core:dashboard')
         else:
+            logger.warning(f"Login fallido para: {username}")
             messages.error(request, 'Usuario o contraseña incorrectos')
     
     return render(request, 'users/login.html')
+
 
 def register_view(request):
     """Vista de registro de nuevos usuarios."""

@@ -8,6 +8,10 @@ import plotly.utils
 import json
 from django.http import JsonResponse
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # Import MongoDB connection
 try:
@@ -168,5 +172,35 @@ def test_mongodb(request):
             data['status'] = 'ERROR'
     else:
         data['status'] = 'DISCONNECTED'
+    
+    return JsonResponse(data)
+def test_mongodb(request):
+    """Endpoint para probar la conexión a MongoDB."""
+    data = {
+        'connected': settings.MONGO_CONNECTED,
+        'db_name': settings.MONGO_DB_NAME,
+        'mongo_uri_prefix': settings.MONGO_URI[:30] if settings.MONGO_URI else None,
+    }
+    
+    if settings.MONGO_CONNECTED and settings.MONGO_DB is not None:
+        try:
+            db = settings.MONGO_DB
+            users_collection = db['users']
+            count = users_collection.count_documents({})
+            data['users_count'] = count
+            data['status'] = 'OK'
+            
+            # Listar usuarios (solo para depuración)
+            users = list(users_collection.find({}, {'username': 1, 'email': 1, '_id': 0}))
+            data['users'] = users
+            
+            logger.info(f"Test MongoDB exitoso: {count} usuarios")
+        except Exception as e:
+            data['error'] = str(e)
+            data['status'] = 'ERROR'
+            logger.error(f"Error en test MongoDB: {e}")
+    else:
+        data['status'] = 'DISCONNECTED'
+        logger.error(" MongoDB no conectado en test")
     
     return JsonResponse(data)
