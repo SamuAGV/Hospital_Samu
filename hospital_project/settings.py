@@ -75,10 +75,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',  # Este debe estar
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Este también
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -173,16 +173,27 @@ else:
     }
 
 # Usar sesiones basadas en cache para evitar escritura en disco
+# ============================================================
+# SESSION CONFIGURATION - Usar base de datos para sesiones
+# ============================================================
 if IS_VERCEL:
+    # En Vercel, usar la base de datos (SQLite en memoria o PostgreSQL)
+    # pero con persistencia de sesión
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+    SESSION_COOKIE_AGE = 86400  # 24 horas
+    SESSION_SAVE_EVERY_REQUEST = True
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+    
+    # Configurar cache para otros usos
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'unique-snowflake',
         }
     }
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 else:
     SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+    SESSION_COOKIE_AGE = 1209600  # 2 semanas
 
 # ============================================================
 # AUTHENTICATION - Usar backend personalizado de MongoDB
