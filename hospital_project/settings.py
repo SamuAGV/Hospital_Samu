@@ -120,10 +120,10 @@ try:
     mongo_client.admin.command('ping')
     mongo_db = mongo_client[MONGO_DB_NAME]
     MONGO_CONNECTED = True
-    print(f"✅ Conectado a MongoDB: {MONGO_DB_NAME}")
+    print(f"Conectado a MongoDB: {MONGO_DB_NAME}")
 except Exception as e:
     MONGO_CONNECTED = False
-    print(f"❌ Error al conectar a MongoDB: {e}")
+    print(f"Error al conectar a MongoDB: {e}")
     print("Verifica tu conexión a Internet y las credenciales en .env")
     # Crear una conexión dummy para evitar errores
     mongo_client = None
