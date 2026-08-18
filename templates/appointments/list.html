@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Citas - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-calendar-check"></i> Citas Médicas</h1>
+        <a href="{% url 'appointments:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Cita
+        </a>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-blue">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Total Citas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-green">
+                <div class="metric-value">{{ status_stats.Programada|default:0 }}</div>
+                <div class="metric-label">Programadas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-orange">
+                <div class="metric-value">{{ status_stats.Reprogramada|default:0 }}</div>
+                <div class="metric-label">Reprogramadas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-red">
+                <div class="metric-value">{{ status_stats.Cancelada|default:0 }}</div>
+                <div class="metric-label">Canceladas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de citas -->
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Paciente</th>
+                        <th>Médico</th>
+                        <th>Especialidad</th>
+                        <th>Estado</th>
+                        <th>Motivo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ appointment.fecha_hora }}</td>
+                        <td>{{ appointment.id_paciente|default:'No asignado' }}</td>
+                        <td>{{ appointment.id_medico|default:'No asignado' }}</td>
+                        <td>{{ appointment.especialidad|default:'General' }}</td>
+                        <td>
+                            <span class="badge {% if appointment.estado == 'Programada' %}bg-success{% elif appointment.estado == 'Cancelada' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ appointment.estado|default:'Programada' }}
+                            </span>
+                        </td>
+                        <td>{{ appointment.motivo|truncatechars:30|default:'-' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'appointments:detail' appointment.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if appointment.estado != 'Cancelada' %}
+                                <a href="{% url 'appointments:reschedule' appointment.id %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" onclick="cancelAppointment('{{ appointment.id }}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay citas registradas</p>
+                            <a href="{% url 'appointments:create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Agendar primera cita
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelAppointment(appointmentId) {
+    if (confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
+        const motivo = prompt('Motivo de cancelación:');
+        if (motivo !== null) {
+            fetch(`/appointments/${appointmentId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `motivo=${encodeURIComponent(motivo)}`
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

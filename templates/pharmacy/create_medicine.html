@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuevo Medicamento - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-plus-circle"></i> Nuevo Medicamento</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" name="nombre" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Principio Activo</label>
+                            <input type="text" name="principio_activo" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Presentación</label>
+                            <input type="text" name="presentacion" class="form-control" placeholder="Ej: Tableta">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Concentración</label>
+                            <input type="text" name="concentracion" class="form-control" placeholder="Ej: 500mg">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Precio Unitario</label>
+                            <input type="number" name="precio_unitario" class="form-control" step="0.01" value="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Stock Inicial</label>
+                            <input type="number" name="stock" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Stock Mínimo</label>
+                            <input type="number" name="stock_minimo" class="form-control" value="10">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3 form-check mt-4">
+                            <input type="checkbox" name="requiere_receta" class="form-check-input" id="receta">
+                            <label class="form-check-label" for="receta">Requiere Receta</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Medicamento
+                    </button>
+                    <a href="{% url 'pharmacy:list_medicines' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

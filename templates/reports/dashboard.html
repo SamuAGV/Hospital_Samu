@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Reportes - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-file-alt"></i> Reportes</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                    <h5>Reporte de Citas</h5>
+                    <p class="text-muted small">Análisis de citas programadas, canceladas y atendidas</p>
+                    <a href="{% url 'reports:appointments' %}" class="btn btn-primary">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-stethoscope fa-3x text-success mb-3"></i>
+                    <h5>Reporte de Consultas</h5>
+                    <p class="text-muted small">Análisis de consultas por especialidad y tipo</p>
+                    <a href="{% url 'reports:consultations' %}" class="btn btn-success">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-bed fa-3x text-warning mb-3"></i>
+                    <h5>Reporte de Ocupación</h5>
+                    <p class="text-muted small">Análisis de ocupación hospitalaria y camas</p>
+                    <a href="{% url 'reports:occupancy' %}" class="btn btn-warning">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-brain fa-3x text-purple mb-3"></i>
+                    <h5>Reporte ML</h5>
+                    <p class="text-muted small">Resultados de modelos de Machine Learning</p>
+                    <a href="{% url 'reports:ml_report' %}" class="btn btn-purple">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-purple {
+    background-color: #6a1b9a;
+    color: white;
+}
+.btn-purple:hover {
+    background-color: #4a148c;
+    color: white;
+}
+</style>
+{% endblock %}

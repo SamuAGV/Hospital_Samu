@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Hospitalización - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-hospital-user"></i> Detalle de Hospitalización</h1>
+        <div>
+            {% if hospitalization.estado == 'Activa' %}
+            <button class="btn btn-success" onclick="dischargePatient('{{ hospitalization.id }}')">
+                <i class="fas fa-check"></i> Dar de Alta
+            </button>
+            {% endif %}
+            <a href="{% url 'hospitalizations:list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>Paciente</th>
+                            <td>{{ hospitalization.id_paciente|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Médico Responsable</th>
+                            <td>{{ hospitalization.id_medico_responsable|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha de Ingreso</th>
+                            <td>{{ hospitalization.fecha_ingreso }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha de Alta</th>
+                            <td>{{ hospitalization.fecha_alta|default:'Pendiente' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Habitación</th>
+                            <td>{{ hospitalization.habitacion|default:'No asignada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cama</th>
+                            <td>{{ hospitalization.cama|default:'No asignada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <span class="badge {% if hospitalization.estado == 'Activa' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ hospitalization.estado|default:'Activa' }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Motivo de Ingreso</h6>
+                            <p>{{ hospitalization.motivo_ingreso|default:'No especificado' }}</p>
+                            <hr>
+                            <h6>Diagnóstico de Ingreso</h6>
+                            <p>{{ hospitalization.diagnostico_ingreso|default:'No especificado' }}</p>
+                            <hr>
+                            <h6>Observaciones</h6>
+                            <p>{{ hospitalization.observaciones|default:'Sin observaciones' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function dischargePatient(hospitalizationId) {
+    if (confirm('¿Estás seguro de que deseas dar de alta a este paciente?')) {
+        const observaciones = prompt('Observaciones del alta:');
+        if (observaciones !== null) {
+            fetch(`/hospitalizations/${hospitalizationId}/discharge/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `observaciones=${encodeURIComponent(observaciones)}`
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

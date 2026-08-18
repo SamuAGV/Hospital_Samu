@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Análisis - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-chart-bar"></i> Análisis Hospitalario</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-calendar-alt"></i> Demanda Semanal</h5>
+                <div id="demandChart"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-chart-line"></i> Pronóstico de Demanda</h5>
+                <div id="forecastChart"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-container">
+                <h5><i class="fas fa-fire"></i> Mapa de Calor - Horarios de Mayor Demanda</h5>
+                <div id="heatmapChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usar json_script para datos seguros -->
+{{ demand_data|json_script:"demand-data" }}
+{{ forecast_data|json_script:"forecast-data" }}
+{{ heatmap_data|json_script:"heatmap-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfica de demanda
+    const demandData = JSON.parse(document.getElementById('demand-data').textContent);
+    if (demandData && Object.keys(demandData).length > 0) {
+        const trace = {
+            x: demandData.dates,
+            y: demandData.values,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Consultas diarias',
+            line: {color: '#0d47a1', width: 3},
+            marker: {size: 8, color: '#1565c0'}
+        };
+        Plotly.newPlot('demandChart', [trace], {
+            height: 300,
+            margin: {l: 40, r: 20, t: 20, b: 40},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)'
+        });
+    }
+    
+    // Gráfica de pronóstico
+    const forecastData = JSON.parse(document.getElementById('forecast-data').textContent);
+    if (forecastData && Object.keys(forecastData).length > 0) {
+        const trace = {
+            x: forecastData.dates,
+            y: forecastData.values,
+            type: 'bar',
+            name: 'Pronóstico',
+            marker: {
+                color: forecastData.values,
+                colorscale: 'Blues',
+                showscale: false
+            }
+        };
+        Plotly.newPlot('forecastChart', [trace], {
+            height: 300,
+            margin: {l: 40, r: 20, t: 20, b: 40},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)'
+        });
+    }
+    
+    // Mapa de calor
+    const heatmapData = JSON.parse(document.getElementById('heatmap-data').textContent);
+    if (heatmapData && Object.keys(heatmapData).length > 0) {
+        const trace = {
+            z: heatmapData.z,
+            x: heatmapData.x,
+            y: heatmapData.y,
+            type: 'heatmap',
+            colorscale: 'Reds',
+            showscale: true
+        };
+        Plotly.newPlot('heatmapChart', [trace], {
+            height: 400,
+            margin: {l: 60, r: 20, t: 20, b: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            xaxis: {title: 'Día de la Semana'},
+            yaxis: {title: 'Hora'}
+        });
+    }
+});
+</script>
+{% endblock %}

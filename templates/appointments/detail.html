@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Cita - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-calendar-check"></i> Detalle de Cita</h1>
+        <a href="{% url 'appointments:list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>Paciente</th>
+                            <td>{{ appointment.id_paciente|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Médico</th>
+                            <td>{{ appointment.id_medico|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <td>{{ appointment.fecha_hora }}</td>
+                        </tr>
+                        <tr>
+                            <th>Duración</th>
+                            <td>{{ appointment.duracion|default:30 }} minutos</td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <span class="badge {% if appointment.estado == 'Programada' %}bg-success{% elif appointment.estado == 'Cancelada' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ appointment.estado|default:'Programada' }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Motivo</th>
+                            <td>{{ appointment.motivo|default:'Sin motivo' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-grid gap-2">
+                        {% if appointment.estado != 'Cancelada' %}
+                        <button class="btn btn-warning" onclick="rescheduleAppointment('{{ appointment.id }}')">
+                            <i class="fas fa-calendar-alt"></i> Reagendar Cita
+                        </button>
+                        <button class="btn btn-danger" onclick="cancelAppointment('{{ appointment.id }}')">
+                            <i class="fas fa-times"></i> Cancelar Cita
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelAppointment(appointmentId) {
+    if (confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
+        const motivo = prompt('Motivo de cancelación:');
+        if (motivo !== null) {
+            fetch(`/appointments/${appointmentId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `motivo=${encodeURIComponent(motivo)}`
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    }
+}
+
+function rescheduleAppointment(appointmentId) {
+    const nuevaFecha = prompt('Ingresa la nueva fecha y hora (YYYY-MM-DD HH:MM):');
+    if (nuevaFecha) {
+        const motivo = prompt('Motivo del reagendamiento:');
+        fetch(`/appointments/${appointmentId}/reschedule/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `nueva_fecha_hora=${encodeURIComponent(nuevaFecha)}&motivo=${encodeURIComponent(motivo)}`
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

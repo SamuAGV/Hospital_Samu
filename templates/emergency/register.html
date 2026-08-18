@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar en Urgencias - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-user-plus"></i> Registrar Paciente en Urgencias</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Paciente *</label>
+                            <select name="id_paciente" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id_paciente }}">{{ patient.nombre }} {{ patient.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Prioridad *</label>
+                            <select name="prioridad" class="form-select" required>
+                                <option value="Baja">Baja</option>
+                                <option value="Media" selected>Media</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Crítica">Crítica</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Temperatura (°C)</label>
+                            <input type="number" name="temperatura" class="form-control" step="0.1" value="36.5">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Presión Arterial</label>
+                            <input type="text" name="presion_arterial" class="form-control" placeholder="120/80">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Frecuencia Cardíaca</label>
+                            <input type="number" name="frecuencia_cardiaca" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Síntomas</label>
+                            <textarea name="sintomas" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Notas</label>
+                            <textarea name="notas" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-save"></i> Registrar en Urgencias
+                    </button>
+                    <a href="{% url 'emergency:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Paciente - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0">
+            <i class="fas fa-user-circle"></i> 
+            {{ patient.nombre }} {{ patient.apellido }}
+        </h1>
+        <div>
+            <a href="{% url 'patients:edit' patient.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'patients:list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información personal -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-id-card"></i> Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Nombre completo</th>
+                            <td>{{ patient.nombre }} {{ patient.apellido }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha de Nacimiento</th>
+                            <td>{{ patient.fecha_nacimiento }}</td>
+                        </tr>
+                        <tr>
+                            <th>Edad</th>
+                            <td>{{ patient.edad|default:'No calculada' }} años</td>
+                        </tr>
+                        <tr>
+                            <th>Género</th>
+                            <td>{{ patient.genero|default:'No especificado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tipo de Sangre</th>
+                            <td>{{ patient.tipo_sangre|default:'No registrado' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacto -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-address-card"></i> Contacto</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Teléfono</th>
+                            <td>{{ patient.telefono|default:'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ patient.email|default:'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Dirección</th>
+                            <td>{{ patient.direccion|default:'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Alergias</th>
+                            <td>{{ patient.alergias|default:'Ninguna' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Enfermedades Crónicas</th>
+                            <td>{{ patient.enfermedades_cronicas|default:'Ninguna' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-history"></i> Historial Médico</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#consultations">Consultas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#hospitalizations">Hospitalizaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#diagnostics">Diagnósticos</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3">
+                        <div class="tab-pane fade show active" id="consultations">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Médico</th>
+                                            <th>Especialidad</th>
+                                            <th>Tipo</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for consultation in consultations %}
+                                        <tr>
+                                            <td>{{ consultation.fecha_hora }}</td>
+                                            <td>{{ consultation.medico_nombre|default:'No asignado' }}</td>
+                                            <td>{{ consultation.especialidad|default:'General' }}</td>
+                                            <td>{{ consultation.tipo_consulta|default:'Consulta' }}</td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                No hay consultas registradas
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="hospitalizations">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Ingreso</th>
+                                            <th>Alta</th>
+                                            <th>Habitación</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hospitalization in hospitalizations %}
+                                        <tr>
+                                            <td>{{ hospitalization.fecha_ingreso }}</td>
+                                            <td>{{ hospitalization.fecha_alta|default:'Activo' }}</td>
+                                            <td>{{ hospitalization.habitacion|default:'-' }}</td>
+                                            <td>
+                                                <span class="badge {% if hospitalization.estado == 'Activa' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ hospitalization.estado|default:'Finalizada' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                No hay hospitalizaciones registradas
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="diagnostics">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-diagnoses fa-3x mb-3 d-block"></i>
+                                <p>Módulo de diagnósticos en desarrollo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

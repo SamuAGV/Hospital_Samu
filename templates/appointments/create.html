@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Agendar Cita - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-calendar-plus"></i> Agendar Cita</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Paciente *</label>
+                            <select name="id_paciente" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id_paciente }}">{{ patient.nombre }} {{ patient.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Médico *</label>
+                            <select name="id_medico" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id_medico }}">{{ doctor.nombre }} {{ doctor.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha y Hora *</label>
+                            <input type="datetime-local" name="fecha_hora" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Duración (minutos)</label>
+                            <input type="number" name="duracion" class="form-control" value="30">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <textarea name="motivo" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Agendar Cita
+                    </button>
+                    <a href="{% url 'appointments:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

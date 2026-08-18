@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Pacientes - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-users"></i> Pacientes</h1>
+        <div>
+            <a href="{% url 'patients:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Paciente
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-blue">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Total Pacientes</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-purple">
+                <div class="metric-value">{{ mujeres|default:0 }}</div>
+                <div class="metric-label">Mujeres</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-green">
+                <div class="metric-value">{{ hombres|default:0 }}</div>
+                <div class="metric-label">Hombres</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-orange">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Activos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form action="{% url 'patients:search' %}" method="get" class="d-flex">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, apellido, teléfono..." value="{{ request.GET.q }}">
+                <button type="submit" class="btn btn-primary ms-2">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de pacientes -->
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Género</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Tipo Sangre</th>
+                        <th>Edad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr>
+                        <td>{{ patient.id_paciente|default:forloop.counter }}</td>
+                        <td>{{ patient.nombre }}</td>
+                        <td>{{ patient.apellido }}</td>
+                        <td>
+                            <span class="badge {% if patient.genero == 'Femenino' %}bg-purple{% else %}bg-primary{% endif %}">
+                                {{ patient.genero|default:'No especificado' }}
+                            </span>
+                        </td>
+                        <td>{{ patient.telefono|default:'-' }}</td>
+                        <td>{{ patient.email|default:'-' }}</td>
+                        <td><span class="badge bg-info">{{ patient.tipo_sangre|default:'-' }}</span></td>
+                        <td>{{ patient.edad|default:'-' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if patient.id %}
+                                <a href="{% url 'patients:detail' patient.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'patients:edit' patient.id %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-danger" onclick="deletePatient('{{ patient.id }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <span class="text-muted small">Sin ID</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay pacientes registrados</p>
+                            <a href="{% url 'patients:create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Registrar primer paciente
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function deletePatient(patientId) {
+    if (confirm('¿Estás seguro de que deseas desactivar este paciente?')) {
+        fetch(`/patients/${patientId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Medicamento - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-prescription-bottle"></i> {{ medicine.nombre }}</h1>
+        <a href="{% url 'pharmacy:list_medicines' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Nombre</th>
+                            <td>{{ medicine.nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Principio Activo</th>
+                            <td>{{ medicine.principio_activo|default:'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Presentación</th>
+                            <td>{{ medicine.presentacion|default:'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Concentración</th>
+                            <td>{{ medicine.concentracion|default:'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Precio Unitario</th>
+                            <td>${{ medicine.precio_unitario|default:0 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requiere Receta</th>
+                            <td>{% if medicine.requiere_receta %}Sí{% else %}No{% endif %}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Inventario</h6>
+                    <div class="display-6">{{ medicine.stock|default:0 }}</div>
+                    <p class="text-muted">Stock Mínimo: {{ medicine.stock_minimo|default:10 }}</p>
+                    
+                    <div class="progress mb-3">
+                        {% with stock=medicine.stock|default:0 stock_minimo=medicine.stock_minimo|default:10 %}
+                            {% if stock > 0 %}
+                                {% with total=stock_minimo|add:10 %}
+                                    {% widthratio stock total 100 as pct %}
+                                    {% if pct > 100 %}
+                                        {% if stock <= stock_minimo %}
+                                            <div class="progress-bar bg-danger" style="width: 100%"></div>
+                                        {% else %}
+                                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if stock <= stock_minimo %}
+                                            <div class="progress-bar bg-danger" style="width: {{ pct|stringformat:'d' }}%"></div>
+                                        {% else %}
+                                            <div class="progress-bar bg-success" style="width: {{ pct|stringformat:'d' }}%"></div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="progress-bar bg-danger" style="width: 0%"></div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'pharmacy:add_inventory' %}" class="btn btn-primary">
+                            <i class="fas fa-exchange-alt"></i> Registrar Movimiento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

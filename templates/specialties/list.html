@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Especialidades - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-user-md"></i> Especialidades Médicas</h1>
+        <a href="{% url 'specialties:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Especialidad
+        </a>
+    </div>
+
+    <div class="row">
+        {% for specialty in specialties %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-stethoscope text-primary"></i>
+                        {{ specialty.nombre }}
+                    </h5>
+                    <p class="card-text text-muted small">{{ specialty.descripcion|default:'Sin descripción' }}</p>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">
+                            <i class="fas fa-clock"></i> {{ specialty.tiempo_promedio_atencion|default:30 }} min
+                        </span>
+                        <span class="text-muted small">
+                            <i class="fas fa-coins"></i> ${{ specialty.costo_consulta|default:0 }}
+                        </span>
+                        <span class="badge bg-info">
+                            {% with specialty_nombre=specialty.nombre %}
+                                {% if specialty_nombre in stats %}
+                                    {{ stats|get_item:specialty_nombre }} consultas
+                                {% else %}
+                                    0 consultas
+                                {% endif %}
+                            {% endwith %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-user-md fa-3x text-muted mb-3 d-block"></i>
+            <p class="text-muted">No hay especialidades registradas</p>
+            <a href="{% url 'specialties:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Crear primera especialidad
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

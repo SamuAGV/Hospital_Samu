@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultas - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-stethoscope"></i> Consultas Médicas</h1>
+        <a href="{% url 'consultations:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Consulta
+        </a>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card card-blue">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Total Consultas</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card card-green">
+                <div class="metric-value">{{ tipos.Primera_vez|default:0 }}</div>
+                <div class="metric-label">Primera Vez</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card card-orange">
+                <div class="metric-value">{{ tipos.Seguimiento|default:0 }}</div>
+                <div class="metric-label">Seguimiento</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de consultas -->
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Paciente</th>
+                        <th>Médico</th>
+                        <th>Tipo</th>
+                        <th>Duración</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for consultation in consultations %}
+                    <tr>
+                        <td>{{ consultation.fecha_hora|truncatechars:16 }}</td>
+                        <td>{{ consultation.id_paciente|default:'No asignado' }}</td>
+                        <td>{{ consultation.id_medico|default:'No asignado' }}</td>
+                        <td>
+                            <span class="badge {% if consultation.tipo_consulta == 'Primera vez' %}bg-primary{% elif consultation.tipo_consulta == 'Seguimiento' %}bg-info{% else %}bg-warning{% endif %}">
+                                {{ consultation.tipo_consulta|default:'Consulta' }}
+                            </span>
+                        </td>
+                        <td>{{ consultation.duracion_atencion|default:0 }} min</td>
+                        <td>
+                            <span class="badge bg-success">Completada</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'consultations:detail' consultation.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'consultations:edit' consultation.id %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-stethoscope fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay consultas registradas</p>
+                            <a href="{% url 'consultations:create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Registrar primera consulta
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

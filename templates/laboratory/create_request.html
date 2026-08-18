@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Solicitud de Laboratorio - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-plus-circle"></i> Nueva Solicitud de Laboratorio</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Paciente *</label>
+                            <select name="id_paciente" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id_paciente }}">{{ patient.nombre }} {{ patient.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Médico *</label>
+                            <select name="id_medico" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id_medico }}">{{ doctor.nombre }} {{ doctor.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del Estudio *</label>
+                            <input type="text" name="nombre_estudio" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Estudio</label>
+                            <select name="tipo_estudio" class="form-select">
+                                <option value="Laboratorio">Laboratorio</option>
+                                <option value="Imagen">Imagen</option>
+                                <option value="Patología">Patología</option>
+                                <option value="Genético">Genético</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Registrar Solicitud
+                    </button>
+                    <a href="{% url 'laboratory:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

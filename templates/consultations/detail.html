@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Consulta - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-stethoscope"></i> Detalle de Consulta</h1>
+        <a href="{% url 'consultations:list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-notes-medical"></i> Información de la Consulta</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Paciente</th>
+                            <td>{{ consultation.id_paciente|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Médico</th>
+                            <td>{{ consultation.id_medico|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha</th>
+                            <td>{{ consultation.fecha_hora }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tipo</th>
+                            <td>{{ consultation.tipo_consulta|default:'Consulta' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Duración</th>
+                            <td>{{ consultation.duracion_atencion|default:0 }} min</td>
+                        </tr>
+                        <tr>
+                            <th>Peso</th>
+                            <td>{{ consultation.peso|default:'N/A' }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>Altura</th>
+                            <td>{{ consultation.altura|default:'N/A' }} cm</td>
+                        </tr>
+                        <tr>
+                            <th>Presión Arterial</th>
+                            <td>{{ consultation.presion_arterial|default:'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Temperatura</th>
+                            <td>{{ consultation.temperatura|default:'N/A' }} °C</td>
+                        </tr>
+                        <tr>
+                            <th>Frecuencia Cardíaca</th>
+                            <td>{{ consultation.frecuencia_cardiaca|default:'N/A' }} bpm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-prescription"></i> Tratamiento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Síntomas</label>
+                        <p class="form-control-static">{{ consultation.sintomas|default:'No registrados' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notas Clínicas</label>
+                        <p class="form-control-static">{{ consultation.notas_clinicas|default:'No registradas' }}</p>
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#diagnosticModal">
+                            <i class="fas fa-diagnoses"></i> Agregar Diagnóstico
+                        </button>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#treatmentModal">
+                            <i class="fas fa-prescription"></i> Agregar Tratamiento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnósticos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-diagnoses"></i> Diagnósticos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Código CIE-10</th>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for diagnostic in diagnostics %}
+                                <tr>
+                                    <td>{{ diagnostic.codigo_cie10 }}</td>
+                                    <td>{{ diagnostic.nombre }}</td>
+                                    <td>{{ diagnostic.tipo|default:'Principal' }}</td>
+                                    <td>{{ diagnostic.fecha_diagnostico }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No hay diagnósticos registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tratamientos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-prescription-bottle"></i> Tratamientos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Medicamento</th>
+                                    <th>Dosis</th>
+                                    <th>Frecuencia</th>
+                                    <th>Duración</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for treatment in treatments %}
+                                <tr>
+                                    <td>{{ treatment.id_medicamento }}</td>
+                                    <td>{{ treatment.dosis }}</td>
+                                    <td>{{ treatment.frecuencia }}</td>
+                                    <td>{{ treatment.duracion_dias }} días</td>
+                                    <td>
+                                        <span class="badge {% if treatment.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if treatment.activo %}Activo{% else %}Completado{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No hay tratamientos registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Diagnóstico -->
+<div class="modal fade" id="diagnosticModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-diagnoses"></i> Agregar Diagnóstico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'consultations:add_diagnostic' consultation.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Código CIE-10</label>
+                        <input type="text" name="codigo_cie10" class="form-control" placeholder="Ej: J06.9">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo" class="form-select">
+                            <option value="Principal">Principal</option>
+                            <option value="Secundario">Secundario</option>
+                            <option value="Comorbilidad">Comorbilidad</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save"></i> Guardar Diagnóstico
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tratamiento -->
+<div class="modal fade" id="treatmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-prescription"></i> Agregar Tratamiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'consultations:add_treatment' consultation.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Medicamento</label>
+                        <input type="text" name="id_medicamento" class="form-control" placeholder="Nombre del medicamento">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dosis</label>
+                        <input type="text" name="dosis" class="form-control" placeholder="Ej: 500mg">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Frecuencia</label>
+                        <input type="text" name="frecuencia" class="form-control" placeholder="Ej: Cada 8 horas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Duración (días)</label>
+                        <input type="number" name="duracion_dias" class="form-control" value="7">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Indicaciones</label>
+                        <textarea name="indicaciones" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save"></i> Guardar Tratamiento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

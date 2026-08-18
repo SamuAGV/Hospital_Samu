@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Consultas - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-stethoscope"></i> Reporte de Consultas</h1>
+        <div>
+            <a href="{% url 'reports:export' 'consultations' %}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar
+            </a>
+            <a href="{% url 'reports:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-blue">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Total Consultas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Paciente</th>
+                        <th>Médico</th>
+                        <th>Tipo</th>
+                        <th>Duración</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for consultation in consultations %}
+                    <tr>
+                        <td>{{ consultation.fecha_hora }}</td>
+                        <td>{{ consultation.id_paciente|default:'No asignado' }}</td>
+                        <td>{{ consultation.id_medico|default:'No asignado' }}</td>
+                        <td>{{ consultation.tipo_consulta|default:'Consulta' }}</td>
+                        <td>{{ consultation.duracion_atencion|default:0 }} min</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="fas fa-stethoscope fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay consultas registradas</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

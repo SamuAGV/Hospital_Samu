@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Consulta - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-edit"></i> Editar Consulta</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" name="peso" class="form-control" step="0.1" value="{{ consultation.peso }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Altura (cm)</label>
+                            <input type="number" name="altura" class="form-control" step="0.1" value="{{ consultation.altura }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Presión Arterial</label>
+                            <input type="text" name="presion_arterial" class="form-control" value="{{ consultation.presion_arterial }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Temperatura (°C)</label>
+                            <input type="number" name="temperatura" class="form-control" step="0.1" value="{{ consultation.temperatura }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Frecuencia Cardíaca</label>
+                            <input type="number" name="frecuencia_cardiaca" class="form-control" value="{{ consultation.frecuencia_cardiaca }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Duración (minutos)</label>
+                            <input type="number" name="duracion_atencion" class="form-control" value="{{ consultation.duracion_atencion|default:30 }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Consulta</label>
+                            <select name="tipo_consulta" class="form-select">
+                                <option value="Consulta" {% if consultation.tipo_consulta == 'Consulta' %}selected{% endif %}>Consulta</option>
+                                <option value="Primera vez" {% if consultation.tipo_consulta == 'Primera vez' %}selected{% endif %}>Primera vez</option>
+                                <option value="Seguimiento" {% if consultation.tipo_consulta == 'Seguimiento' %}selected{% endif %}>Seguimiento</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Síntomas</label>
+                            <textarea name="sintomas" class="form-control" rows="3">{{ consultation.sintomas }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Notas Clínicas</label>
+                            <textarea name="notas_clinicas" class="form-control" rows="3">{{ consultation.notas_clinicas }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Actualizar Consulta
+                    </button>
+                    <a href="{% url 'consultations:detail' consultation.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

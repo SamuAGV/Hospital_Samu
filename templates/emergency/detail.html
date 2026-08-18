@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Urgencia - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-ambulance"></i> Detalle de Urgencia</h1>
+        <a href="{% url 'emergency:dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>Paciente</th>
+                            <td>{{ emergency.id_paciente|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha/Hora de Ingreso</th>
+                            <td>{{ emergency.fecha_hora_ingreso }}</td>
+                        </tr>
+                        <tr>
+                            <th>Prioridad</th>
+                            <td>
+                                <span class="badge {% if emergency.prioridad == 'Alta' %}bg-danger{% elif emergency.prioridad == 'Media' %}bg-warning{% else %}bg-success{% endif %}">
+                                    {{ emergency.prioridad|default:'Media' }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <span class="badge {% if emergency.estado == 'En espera' %}bg-warning{% elif emergency.estado == 'Atendido' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ emergency.estado|default:'En espera' }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Síntomas</th>
+                            <td>{{ emergency.sintomas|default:'No registrados' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Signos Vitales</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Temperatura</th>
+                                    <td>{{ emergency.temperatura|default:'N/A' }} °C</td>
+                                </tr>
+                                <tr>
+                                    <th>Presión Arterial</th>
+                                    <td>{{ emergency.presion_arterial|default:'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Frecuencia Cardíaca</th>
+                                    <td>{{ emergency.frecuencia_cardiaca|default:'N/A' }} bpm</td>
+                                </tr>
+                            </table>
+                            <hr>
+                            <h6>Notas</h6>
+                            <p>{{ emergency.notas|default:'Sin notas' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

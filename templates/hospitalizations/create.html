@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Hospitalizar Paciente - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-hospital-user"></i> Hospitalizar Paciente</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Paciente *</label>
+                            <select name="id_paciente" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id_paciente }}">{{ patient.nombre }} {{ patient.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Médico Responsable *</label>
+                            <select name="id_medico_responsable" class="form-select" required>
+                                <option value="">Seleccionar</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id_medico }}">{{ doctor.nombre }} {{ doctor.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Habitación</label>
+                            <input type="text" name="habitacion" class="form-control" placeholder="Ej: 301">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Cama</label>
+                            <input type="text" name="cama" class="form-control" placeholder="Ej: A">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Ingreso</label>
+                            <select name="tipo_ingreso" class="form-select">
+                                <option value="Programado">Programado</option>
+                                <option value="Urgencia">Urgencia</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Motivo de Ingreso</label>
+                            <textarea name="motivo_ingreso" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Diagnóstico de Ingreso</label>
+                            <textarea name="diagnostico_ingreso" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Hospitalizar Paciente
+                    </button>
+                    <a href="{% url 'hospitalizations:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

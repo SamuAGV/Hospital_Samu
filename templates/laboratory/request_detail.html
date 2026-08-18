@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Solicitud - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-flask"></i> Detalle de Solicitud</h1>
+        <div>
+            {% if request.estado != 'Completado' %}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resultModal">
+                <i class="fas fa-edit"></i> Agregar Resultado
+            </button>
+            {% endif %}
+            <a href="{% url 'laboratory:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th>Paciente</th>
+                            <td>{{ request.id_paciente|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Médico Solicitante</th>
+                            <td>{{ request.id_medico|default:'No asignado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estudio</th>
+                            <td>{{ request.nombre_estudio|default:'-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tipo</th>
+                            <td>{{ request.tipo_estudio|default:'-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Solicitud</th>
+                            <td>{{ request.fecha_solicitud }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado</th>
+                            <td>
+                                <span class="badge {% if request.estado == 'Completado' %}bg-success{% elif request.estado == 'En Proceso' %}bg-info{% elif request.estado == 'Cancelado' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ request.estado|default:'Solicitado' }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Observaciones</h6>
+                            <p>{{ request.observaciones|default:'Sin observaciones' }}</p>
+                            {% if request.resultado %}
+                            <hr>
+                            <h6>Resultado</h6>
+                            <p>{{ request.resultado }}</p>
+                            <p class="text-muted small">Fecha de resultado: {{ request.fecha_resultado|default:'No disponible' }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Resultado -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Agregar Resultado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'laboratory:add_result' request.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Resultado</label>
+                        <textarea name="resultado" class="form-control" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save"></i> Guardar Resultado
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

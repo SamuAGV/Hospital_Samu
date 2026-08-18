@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Ocupación - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0"><i class="fas fa-bed"></i> Reporte de Ocupación</h1>
+        <div>
+            <a href="{% url 'reports:export' 'occupancy' %}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar
+            </a>
+            <a href="{% url 'reports:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-blue">
+                <div class="metric-value">{{ total_camas|default:0 }}</div>
+                <div class="metric-label">Total de Camas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-orange">
+                <div class="metric-value">{{ camas_ocupadas|default:0 }}</div>
+                <div class="metric-label">Camas Ocupadas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card {% if porcentaje < 50 %}card-green{% elif porcentaje < 80 %}card-orange{% else %}card-red{% endif %}">
+                <div class="metric-value">{{ porcentaje|default:0 }}%</div>
+                <div class="metric-label">Porcentaje de Ocupación</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-purple">
+                <div class="metric-value">{{ total_camas|add:camas_ocupadas|default:0 }}</div>
+                <div class="metric-label">Camas Disponibles</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Historial de Ocupación</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Ocupación (%)</th>
+                            <th>Barra</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in historico %}
+                        <tr>
+                            <td>{{ item.fecha }}</td>
+                            {% with ocupacion=item.ocupacion|default:0 %}
+                            <td>{{ ocupacion }}%</td>
+                            <td>
+                                <div class="progress">
+                                    {% if ocupacion < 50 %}
+                                    <div class="progress-bar bg-success" style="width: {{ ocupacion }}%;"></div>
+                                    {% elif ocupacion < 80 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ ocupacion }}%;"></div>
+                                    {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ ocupacion }}%;"></div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No hay datos históricos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

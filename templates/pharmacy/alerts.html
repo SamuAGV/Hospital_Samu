@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Alertas de Farmacia - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-bell"></i> Alertas de Farmacia</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-red">
+                <div class="metric-value">{{ total|default:0 }}</div>
+                <div class="metric-label">Total de Alertas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if alerts %}
+                {% for alert in alerts %}
+                <div class="alert {% if alert.prioridad == 'Alta' %}alert-danger{% else %}alert-warning{% endif %} alert-dismissible fade show">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong><i class="fas fa-exclamation-triangle"></i> {{ alert.tipo }}</strong>
+                            <p class="mb-0"><strong>{{ alert.medicamento }}</strong>: {{ alert.mensaje }}</p>
+                        </div>
+                        <span class="badge {% if alert.prioridad == 'Alta' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {{ alert.prioridad }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3 d-block"></i>
+                    <p class="text-muted">No hay alertas activas</p>
+                    <p class="text-success"><i class="fas fa-check"></i> Todos los medicamentos están en stock adecuado</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrenar Modelos - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-sync-alt"></i> Entrenar Modelos</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle"></i> Información</h5>
+                </div>
+                <div class="card-body">
+                    <p>El re-entrenamiento de modelos utiliza los datos más recientes de la base de datos.</p>
+                    <ul>
+                        <li><strong>Clasificador:</strong> Random Forest para riesgo de reingreso</li>
+                        <li><strong>Regresor:</strong> Regresión Lineal para estancia hospitalaria</li>
+                        <li><strong>K-Means:</strong> Segmentación de pacientes</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Este proceso puede tomar varios minutos dependiendo de la cantidad de datos.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-cogs"></i> Acción</h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-robot fa-4x text-primary mb-3 d-block"></i>
+                    <h4>¿Deseas re-entrenar todos los modelos?</h4>
+                    <p class="text-muted">Los modelos se actualizarán con los datos más recientes</p>
+                    <form method="post" action="{% url 'machine_learning:train' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-sync-alt"></i> Re-entrenar Modelos
+                        </button>
+                    </form>
+                    <a href="{% url 'machine_learning:dashboard' %}" class="btn btn-secondary mt-3">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

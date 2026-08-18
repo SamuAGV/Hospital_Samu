@@ -1,0 +1,1 @@
+# apps/specialties/__init__.py

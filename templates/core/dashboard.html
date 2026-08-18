@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6">
+                <i class="fas fa-chart-line text-primary"></i> Dashboard General
+                <small class="text-muted fs-6">| {{ current_date }}</small>
+            </h1>
+            <p class="text-muted">Bienvenido, {{ user.get_full_name|default:user.username }}</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Métricas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card card-blue">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="metric-icon"><i class="fas fa-users"></i></span>
+                    <span class="badge bg-success">+12%</span>
+                </div>
+                <div class="metric-value">{{ patients_count|default:0 }}</div>
+                <div class="metric-label">Pacientes Registrados</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-green">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="metric-icon"><i class="fas fa-stethoscope"></i></span>
+                    <span class="badge bg-success">+8%</span>
+                </div>
+                <div class="metric-value">{{ consultations_count|default:0 }}</div>
+                <div class="metric-label">Consultas Realizadas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-orange">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="metric-icon"><i class="fas fa-calendar-check"></i></span>
+                    <span class="badge bg-warning">+5%</span>
+                </div>
+                <div class="metric-value">{{ appointments_count|default:0 }}</div>
+                <div class="metric-label">Citas Programadas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card card-red">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="metric-icon"><i class="fas fa-hospital-user"></i></span>
+                    <span class="badge bg-danger">-3%</span>
+                </div>
+                <div class="metric-value">{{ active_hospitalizations|default:0 }}</div>
+                <div class="metric-label">Pacientes Hospitalizados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="chart-container">
+                <h5><i class="fas fa-chart-area text-primary"></i> Demanda de Servicios</h5>
+                <div id="demandChart"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5><i class="fas fa-chart-donut text-primary"></i> Distribución por Especialidad</h5>
+                <div id="specialtyChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-clock text-primary"></i> Horas de Mayor Demanda</h5>
+                <div id="hourlyChart"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5><i class="fas fa-thermometer-half text-primary"></i> Ocupación Hospitalaria</h5>
+                <div id="occupancyChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usar json_script para datos seguros -->
+{{ demand_chart|json_script:"demand-chart-data" }}
+{{ active_hospitalizations|json_script:"hospitalizations-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfica de demanda
+    const demandElement = document.getElementById('demand-chart-data');
+    if (demandElement) {
+        const demandData = JSON.parse(demandElement.textContent);
+        if (demandData && demandData.data && demandData.layout) {
+            Plotly.newPlot('demandChart', demandData.data, demandData.layout);
+        }
+    }
+
+    // Gráfica de especialidades
+    const specialtyData = {
+        values: [280, 145, 120, 95, 75, 50],
+        labels: ['Medicina General', 'Cardiología', 'Pediatría', 'Ginecología', 'Traumatología', 'Neurología'],
+        type: 'pie',
+        marker: {
+            colors: ['#0d47a1', '#1565c0', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9']
+        }
+    };
+    Plotly.newPlot('specialtyChart', [specialtyData], {
+        height: 350,
+        margin: {l: 20, r: 20, t: 20, b: 20},
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+    });
+
+    // Gráfica de horas de mayor demanda
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    const patients = [30, 67, 82, 75, 55, 25, 35, 48, 62, 50, 20];
+    
+    const hourlyData = {
+        x: hours,
+        y: patients,
+        type: 'bar',
+        marker: {
+            color: patients,
+            colorscale: 'Reds',
+            showscale: false
+        }
+    };
+    Plotly.newPlot('hourlyChart', [hourlyData], {
+        height: 300,
+        margin: {l: 40, r: 20, t: 20, b: 40},
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        yaxis: {title: 'Pacientes'},
+        xaxis: {title: 'Hora'}
+    });
+
+    // Gráfica de ocupación (medidor)
+    const hospElement = document.getElementById('hospitalizations-data');
+    const occupancy = hospElement ? parseInt(JSON.parse(hospElement.textContent)) : 47;
+    const totalBeds = 120;
+    const occupancyPercent = Math.round((occupancy / totalBeds) * 100);
+    
+    const gaugeData = {
+        type: 'indicator',
+        mode: 'gauge+number+delta',
+        value: occupancyPercent,
+        title: {text: 'Ocupación de Camas', font: {size: 18, color: '#0d47a1'}},
+        delta: {reference: 70, increasing: {color: "red"}},
+        gauge: {
+            axis: {range: [0, 100], tickwidth: 1, tickcolor: "darkblue"},
+            bar: {color: "#1565c0"},
+            bgcolor: "white",
+            borderwidth: 2,
+            bordercolor: "#e0e0e0",
+            steps: [
+                {range: [0, 50], color: '#e8f5e9'},
+                {range: [50, 80], color: '#fff3e0'},
+                {range: [80, 100], color: '#ffebee'}
+            ],
+            threshold: {
+                line: {color: "red", width: 4},
+                thickness: 0.75,
+                value: 85
+            }
+        }
+    };
+    Plotly.newPlot('occupancyChart', [gaugeData], {
+        height: 300,
+        margin: {l: 20, r: 20, t: 60, b: 20},
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Estadísticas de Urgencias - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-chart-bar"></i> Estadísticas de Urgencias</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> Por Prioridad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Prioridad</th>
+                                    <th>Cantidad</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in por_prioridad %}
+                                <tr>
+                                    <td>
+                                        <span class="badge {% if item._id == 'Alta' %}bg-danger{% elif item._id == 'Media' %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item._id|default:'No especificado' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.count }}</td>
+                                    <td>{% widthratio item.count total 100 %}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No hay datos</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-clock"></i> Por Hora</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in por_hora %}
+                                <tr>
+                                    <td>{{ item._id }}:00 - {{ item._id }}:59</td>
+                                    <td>{{ item.count }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No hay datos</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

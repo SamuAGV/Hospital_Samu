@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulador - MedInsight Hospital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="section-title"><i class="fas fa-chart-line"></i> Simulador de Predicciones</h1>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-sliders-h"></i> Datos del Paciente</h5>
+                </div>
+                <div class="card-body">
+                    <form id="predictForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Edad</label>
+                            <input type="number" class="form-control" id="edad" value="50" min="0" max="120">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Consultas previas (último año)</label>
+                            <input type="number" class="form-control" id="consultas" value="5" min="0" max="50">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">IMC</label>
+                            <input type="number" class="form-control" id="imc" value="25" min="10" max="60" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Género</label>
+                            <select class="form-select" id="genero">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-calculator"></i> Calcular Predicciones
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-bar"></i> Resultados</h5>
+                </div>
+                <div class="card-body" id="resultsContainer">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-arrow-left fa-2x mb-3"></i>
+                        <p>Ingresa los datos del paciente y presiona "Calcular Predicciones"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('predictForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const data = {
+        edad: document.getElementById('edad').value,
+        consultas: document.getElementById('consultas').value,
+        imc: document.getElementById('imc').value,
+        genero: document.getElementById('genero').value,
+    };
+    
+    fetch('{% url "machine_learning:predict" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            let html = '';
+            
+            // Riesgo de reingreso
+            const riesgo = data.riesgo || 0;
+            let color = '#4caf50';
+            let label = 'Bajo Riesgo';
+            if (riesgo > 60) { color = '#f44336'; label = 'Alto Riesgo'; }
+            else if (riesgo > 30) { color = '#ff9800'; label = 'Riesgo Moderado'; }
+            
+            html += `
+                <div style="background: ${color}15; padding: 1.5rem; border-radius: 12px; border: 2px solid ${color}; margin-bottom: 1rem;">
+                    <h4 style="color: ${color};">Riesgo de Reingreso: ${riesgo.toFixed(1)}%</h4>
+                    <p style="font-weight: 500;">${label}</p>
+                </div>
+            `;
+            
+            // Estancia estimada
+            const estancia = data.estancia || 0;
+            html += `
+                <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 12px; border: 2px solid #0d47a1;">
+                    <h4 style="color: #0d47a1;">Estancia Estimada: ${estancia.toFixed(1)} días</h4>
+                    <p class="text-muted small">Basado en datos históricos de pacientes similares</p>
+                </div>
+            `;
+            
+            document.getElementById('resultsContainer').innerHTML = html;
+        }
+    })
+    .catch(error => {
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> Error al procesar la predicción: ${error}
+            </div>
+        `;
+    });
+});
+</script>
+{% endblock %}
