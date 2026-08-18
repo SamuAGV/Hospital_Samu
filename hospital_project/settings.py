@@ -338,37 +338,55 @@ if IS_VERCEL:
     },
 }
 
-
-if IS_VERCEL and MONGO_CONNECTED:
+# ============================================================
+# CONFIGURACIÓN PARA VERCEL - Ejecutar migraciones y sincronizar
+# ============================================================
+if IS_VERCEL:
+    # Verificar y crear tablas si no existen
     try:
-        from django.contrib.auth.models import User
+        from django.db import connection
+        from django.core.management import call_command
         
-        # Sincronizar usuarios de MongoDB a Django
-        db = MONGO_DB
-        users_collection = db['users']
+        # Verificar si la tabla auth_user existe
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='auth_user'")
+            table_exists = cursor.fetchone()
         
-        mongo_users = list(users_collection.find({}))
-        
-        for mongo_user in mongo_users:
-            username = mongo_user.get('username')
-            if username:
-                user, created = User.objects.get_or_create(
-                    username=username,
-                    defaults={
-                        'email': mongo_user.get('email', ''),
-                        'first_name': mongo_user.get('first_name', ''),
-                        'last_name': mongo_user.get('last_name', ''),
-                        'is_active': mongo_user.get('is_active', True),
-                        'is_staff': mongo_user.get('is_staff', False),
-                        'is_superuser': mongo_user.get('is_superuser', False),
-                    }
-                )
-                if created:
-                    user.set_unusable_password()
-                    user.save()
-                    print(f"Sincronizado usuario: {username}")
-        
-        print(f"Sincronización completa: {len(mongo_users)} usuarios")
-        
+        if not table_exists:
+            print("Creando tablas de Django en Vercel...")
+            call_command('migrate', interactive=False)
+            print("Migraciones completadas")
+            
+            # Sincronizar usuarios de MongoDB a Django
+            if MONGO_CONNECTED and MONGO_DB is not None:
+                print("Sincronizando usuarios de MongoDB a Django...")
+                db = MONGO_DB
+                users_collection = db['users']
+                
+                mongo_users = list(users_collection.find({}))
+                for mongo_user in mongo_users:
+                    username = mongo_user.get('username')
+                    if username:
+                        try:
+                            from django.contrib.auth.models import User
+                            user, created = User.objects.get_or_create(
+                                username=username,
+                                defaults={
+                                    'email': mongo_user.get('email', ''),
+                                    'first_name': mongo_user.get('first_name', ''),
+                                    'last_name': mongo_user.get('last_name', ''),
+                                    'is_active': mongo_user.get('is_active', True),
+                                    'is_staff': mongo_user.get('is_staff', False),
+                                    'is_superuser': mongo_user.get('is_superuser', False),
+                                }
+                            )
+                            if created:
+                                user.set_unusable_password()
+                                user.save()
+                                print(f'Usuario creado en Django: {username}')
+                        except Exception as e:
+                            print(f'⚠️ Error con usuario {username}: {e}')
+                
+                print(f'Total usuarios en Django: {User.objects.count()}')
     except Exception as e:
-        print(f"Error sincronizando usuarios: {e}")
+        print(f"⚠️ Error en configuración de Vercel: {e}")

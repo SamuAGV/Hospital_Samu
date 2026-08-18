@@ -20,6 +20,8 @@
   ],
   "env": {
     "DJANGO_SETTINGS_MODULE": "hospital_project.settings",
-    "DEBUG": "False"
-  }
+    "DEBUG": "False",
+    "PYTHONPATH": "."
+  },
+  "buildCommand": "bash build_files.sh"
 }
