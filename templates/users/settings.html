@@ -1,3 +1,4 @@
+<!-- apps/users/templates/users/settings.html -->
 {% extends 'base.html' %}
 
 {% block title %}Configuración - MedInsight Hospital{% endblock %}
@@ -5,6 +6,16 @@
 {% block content %}
 <div class="container-fluid">
     <h1 class="section-title"><i class="fas fa-cog"></i> Configuración</h1>
+    
+    <!-- Mostrar mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     
     <div class="row">
         <div class="col-md-6">
@@ -30,7 +41,9 @@
                                 <option value="large">Grande</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Preferencias
+                        </button>
                     </form>
                 </div>
             </div>
@@ -41,21 +54,19 @@
                     <h5 class="card-title mb-0"><i class="fas fa-shield-alt"></i> Seguridad</h5>
                 </div>
                 <div class="card-body">
-                    <form>
-                        <div class="mb-3">
-                            <label class="form-label">Contraseña Actual</label>
-                            <input type="password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Nueva Contraseña</label>
-                            <input type="password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Confirmar Contraseña</label>
-                            <input type="password" class="form-control" placeholder="••••••••">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
-                    </form>
+                    <p class="text-muted">Para cambiar tu contraseña, ve a la sección de 
+                        <a href="{% url 'users:profile' %}">Perfil</a>.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'users:profile' %}" class="btn btn-primary">
+                            <i class="fas fa-user"></i> Ir a Mi Perfil
+                        </a>
+                    </div>
+                    <hr>
+                    <p class="text-muted small">
+                        <i class="fas fa-info-circle"></i> 
+                        Tu información está almacenada de forma segura en nuestra base de datos.
+                    </p>
                 </div>
             </div>
         </div>

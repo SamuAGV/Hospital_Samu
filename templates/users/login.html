@@ -18,10 +18,10 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="username" class="form-label">
-                                <i class="fas fa-user"></i> Usuario
+                                <i class="fas fa-user"></i> Usuario o Email
                             </label>
                             <input type="text" class="form-control" id="username" name="username" 
-                                   placeholder="Ingresa tu usuario" required autofocus>
+                                   placeholder="Ingresa tu usuario o email" required autofocus>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">
@@ -29,10 +29,6 @@
                             </label>
                             <input type="password" class="form-control" id="password" name="password" 
                                    placeholder="Ingresa tu contraseña" required>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="remember">
-                            <label class="form-check-label" for="remember">Recordarme</label>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
@@ -42,11 +38,11 @@
                     <hr>
                     <div class="text-center">
                         <p class="text-muted small">
-                            <i class="fas fa-info-circle"></i> 
-                            Credenciales de prueba: <strong>admin</strong> / <strong>admin123</strong>
-                        </p>
-                        <p class="text-muted small">
-                            <a href="#" class="text-decoration-none">¿Olvidaste tu contraseña?</a>
+                            <i class="fas fa-user-plus"></i> 
+                            ¿No tienes cuenta? 
+                            <a href="{% url 'users:register' %}" class="text-decoration-none">
+                                Regístrate aquí
+                            </a>
                         </p>
                     </div>
                 </div>

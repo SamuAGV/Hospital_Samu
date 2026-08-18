@@ -1,3 +1,4 @@
+<!-- apps/users/templates/users/profile.html -->
 {% extends 'base.html' %}
 
 {% block title %}Mi Perfil - MedInsight Hospital{% endblock %}
@@ -6,7 +7,18 @@
 <div class="container-fluid">
     <h1 class="section-title"><i class="fas fa-user-circle"></i> Mi Perfil</h1>
     
+    <!-- Mostrar mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
     <div class="row">
+        <!-- Columna izquierda - Información del usuario -->
         <div class="col-md-4">
             <div class="card text-center">
                 <div class="card-body">
@@ -15,31 +27,92 @@
                     <p class="text-muted">{{ user.email }}</p>
                     <hr>
                     <p><strong>Usuario:</strong> {{ user.username }}</p>
-                    <p><strong>Último acceso:</strong> {{ user.last_login|date:"d/m/Y H:i" }}</p>
-                    <p><strong>Fecha de registro:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+                    <p><strong>Último acceso:</strong> 
+                        {% if user_extra.last_login %}
+                            {{ user_extra.last_login|slice:"0:10" }} {{ user_extra.last_login|slice:"11:16" }}
+                        {% else %}
+                            {{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Fecha de registro:</strong> 
+                        {% if user_extra.date_joined %}
+                            {{ user_extra.date_joined|slice:"0:10" }}
+                        {% else %}
+                            {{ user.date_joined|date:"d/m/Y" }}
+                        {% endif %}
+                    </p>
+                    {% if user_extra.is_superuser %}
+                        <span class="badge bg-danger">Administrador</span>
+                    {% elif user_extra.is_staff %}
+                        <span class="badge bg-warning">Staff</span>
+                    {% else %}
+                        <span class="badge bg-info">Usuario</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
+        
+        <!-- Columna derecha - Formularios -->
         <div class="col-md-8">
+            <!-- Formulario de actualización de perfil -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0"><i class="fas fa-edit"></i> Editar Perfil</h5>
                 </div>
                 <div class="card-body">
-                    <form>
-                        <div class="mb-3">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" class="form-control" value="{{ user.first_name }}">
+                    <form method="post" action="{% url 'users:update_profile' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ user.first_name }}" placeholder="Tu nombre">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ user.last_name }}" placeholder="Tu apellido">
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Apellido</label>
-                            <input type="text" class="form-control" value="{{ user.last_name }}">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" placeholder="tu@email.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Actualizar Perfil
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Formulario de cambio de contraseña -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-key"></i> Cambiar Contraseña</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'users:change_password' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Contraseña Actual</label>
+                            <input type="password" class="form-control" id="current_password" 
+                                   name="current_password" placeholder="••••••••" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="{{ user.email }}">
+                            <label for="new_password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="new_password" 
+                                   name="new_password" placeholder="Mínimo 6 caracteres" required>
+                            <small class="text-muted">La contraseña debe tener al menos 6 caracteres</small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="confirm_password" 
+                                   name="confirm_password" placeholder="Repite tu nueva contraseña" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-key"></i> Cambiar Contraseña
+                        </button>
                     </form>
                 </div>
             </div>
