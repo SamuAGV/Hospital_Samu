@@ -2,10 +2,9 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from django.conf import settings
-import hashlib
+from .utils import hash_password, verify_password
 from datetime import datetime
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -15,26 +14,20 @@ class MongoDBBackend(BaseBackend):
     """
     
     def authenticate(self, request, username=None, password=None):
-        # Log 1: Verificar que se llama al backend
         logger.info("=" * 50)
         logger.info(f"Intento de autenticación para: {username}")
         logger.info(f"MONGO_CONNECTED: {settings.MONGO_CONNECTED}")
         logger.info(f"MONGO_DB is None: {settings.MONGO_DB is None}")
         
-        # Verificar conexión a MongoDB
         if not settings.MONGO_CONNECTED or settings.MONGO_DB is None:
             logger.error("MongoDB NO está conectado")
-            logger.error(f"MONGO_URI: {settings.MONGO_URI[:50]}...")  # Solo los primeros 50 caracteres
-            logger.error(f"MONGO_DB_NAME: {settings.MONGO_DB_NAME}")
-            logger.error(f"Variables de entorno en Vercel: {list(os.environ.keys())}")
             return None
         
         try:
             db = settings.MONGO_DB
             users_collection = db['users']
             
-            # Log 2: Buscar usuario
-            logger.info(f"Buscando usuario: {username}")
+            # Buscar usuario por username o email
             user_data = users_collection.find_one({
                 '$or': [
                     {'username': username},
@@ -44,23 +37,41 @@ class MongoDBBackend(BaseBackend):
             
             if not user_data:
                 logger.warning(f"Usuario no encontrado: {username}")
-                # Listar usuarios existentes para depuración
-                all_users = list(users_collection.find({}, {'username': 1, 'email': 1}))
-                logger.info(f"Usuarios en BD: {[u.get('username') for u in all_users]}")
                 return None
             
             logger.info(f"Usuario encontrado: {user_data.get('username')}")
-            logger.info(f"Email: {user_data.get('email')}")
             
-            # Verificar contraseña
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-            stored_password = user_data.get('password')
+            # Verificar contraseña usando la función consistente
+            stored_password = user_data.get('password', '')
             
-            logger.info(f"Contraseña hasheada en BD: {stored_password[:20]}...")
-            logger.info(f"Contraseña ingresada hasheada: {hashed_password[:20]}...")
+            # Intentar verificar con diferentes métodos
+            password_valid = False
             
-            if stored_password == hashed_password:
-                logger.info("Contraseña correcta")
+            # Método 1: Verificación estándar
+            if verify_password(password, stored_password):
+                password_valid = True
+                logger.info("Contraseña válida (método estándar)")
+            
+            # Método 2: Si falla, intentar con hasheo directo
+            if not password_valid:
+                hashed_input = hash_password(password)
+                if hashed_input == stored_password:
+                    password_valid = True
+                    logger.info("Contraseña válida (método directo)")
+            
+            # Método 3: Si aún falla, verificar si la contraseña está sin hashear (solo para desarrollo)
+            if not password_valid and password == stored_password:
+                # Actualizar a hasheado
+                new_hash = hash_password(password)
+                users_collection.update_one(
+                    {'_id': user_data['_id']},
+                    {'$set': {'password': new_hash}}
+                )
+                password_valid = True
+                logger.info("Contraseña actualizada de plano a hasheado")
+            
+            if password_valid:
+                logger.info("Autenticación exitosa")
                 
                 # Crear o obtener usuario de Django
                 try:
@@ -86,14 +97,15 @@ class MongoDBBackend(BaseBackend):
                     {'$set': {'last_login': datetime.now().isoformat()}}
                 )
                 
-                logger.info("Autenticación exitosa")
                 return user
             else:
-                logger.warning("Contraseña incorrecta")
+                logger.warning(f"Contraseña incorrecta para: {username}")
+                logger.info(f"Hash almacenado: {stored_password[:20]}...")
+                logger.info(f"Hash generado: {hash_password(password)[:20]}...")
                 return None
                 
         except Exception as e:
-            logger.error(f"💥 Error en autenticación: {str(e)}")
+            logger.error(f"Error en autenticación: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return None

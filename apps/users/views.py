@@ -5,10 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.auth.models import User
-import hashlib
-import re
-from datetime import datetime
+from .utils import hash_password, verify_password
 import logging
+from datetime import datetime
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,7 +71,7 @@ def register_view(request):
         if password != password2:
             errors.append('Las contraseñas no coinciden')
         
-        # Verificar conexión a MongoDB - CORREGIDO
+        # Verificar conexión a MongoDB
         if settings.MONGO_CONNECTED and settings.MONGO_DB is not None:
             db = settings.MONGO_DB
             users_collection = db['users']
@@ -95,9 +95,9 @@ def register_view(request):
                 'last_name': last_name,
             })
         
-        # Crear usuario en MongoDB
+        # Crear usuario en MongoDB con hasheo consistente
         try:
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            hashed_password = hash_password(password)
             
             user_data = {
                 'username': username,
@@ -125,15 +125,18 @@ def register_view(request):
                 messages.error(request, 'Error al registrar usuario')
                 
         except Exception as e:
+            logger.error(f"Error en registro: {e}")
             messages.error(request, f'Error al registrar: {str(e)}')
     
     return render(request, 'users/register.html')
+
 
 def logout_view(request):
     """Vista de cierre de sesión."""
     logout(request)
     messages.info(request, 'Sesión cerrada correctamente')
     return redirect('users:login')
+
 
 @login_required
 def settings_view(request):
@@ -143,6 +146,7 @@ def settings_view(request):
         'user': request.user,
     }
     return render(request, 'users/settings.html', context)
+
 
 @login_required
 def profile_view(request):
@@ -162,6 +166,7 @@ def profile_view(request):
         'user_extra': user_extra,
     }
     return render(request, 'users/profile.html', context)
+
 
 @login_required
 def update_profile_view(request):
@@ -223,6 +228,7 @@ def update_profile_view(request):
     
     return redirect('users:profile')
 
+
 @login_required
 def change_password_view(request):
     """Vista para cambiar la contraseña."""
@@ -248,8 +254,8 @@ def change_password_view(request):
             
             user_data = users_collection.find_one({'username': request.user.username})
             if user_data:
-                current_hashed = hashlib.sha256(current_password.encode()).hexdigest()
-                if user_data.get('password') != current_hashed:
+                # Usar verify_password para verificar la contraseña actual
+                if not verify_password(current_password, user_data.get('password', '')):
                     errors.append('La contraseña actual es incorrecta')
         
         if errors:
@@ -257,12 +263,12 @@ def change_password_view(request):
                 messages.error(request, error)
             return redirect('users:settings')
         
-        # Actualizar contraseña en MongoDB
+        # Actualizar contraseña en MongoDB con hasheo consistente
         if settings.MONGO_CONNECTED and settings.MONGO_DB is not None:
             db = settings.MONGO_DB
             users_collection = db['users']
             
-            new_hashed = hashlib.sha256(new_password.encode()).hexdigest()
+            new_hashed = hash_password(new_password)
             
             result = users_collection.update_one(
                 {'username': request.user.username},
