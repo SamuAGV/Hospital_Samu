@@ -292,3 +292,31 @@ if not DEBUG:
 # a través de settings.MONGO_DB, settings.MONGO_CLIENT, etc.
 MONGO_CLIENT = mongo_client
 MONGO_DB = mongo_db
+
+# Configuración de logging para Vercel
+if IS_VERCEL:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'apps.users.backends': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': True,
+            },
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }

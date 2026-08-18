@@ -6,6 +6,8 @@ import pandas as pd
 import plotly.graph_objs as go
 import plotly.utils
 import json
+from django.http import JsonResponse
+from django.conf import settings
 
 # Import MongoDB connection
 try:
@@ -145,3 +147,26 @@ def get_empty_demand_chart():
         yaxis=dict(showgrid=False, zeroline=False, visible=False)
     )
     return fig
+
+def test_mongodb(request):
+    """Endpoint para probar la conexión a MongoDB."""
+    data = {
+        'connected': settings.MONGO_CONNECTED,
+        'db_name': settings.MONGO_DB_NAME,
+        'mongo_db': str(settings.MONGO_DB),
+    }
+    
+    if settings.MONGO_CONNECTED and settings.MONGO_DB is not None:
+        try:
+            db = settings.MONGO_DB
+            users_collection = db['users']
+            count = users_collection.count_documents({})
+            data['users_count'] = count
+            data['status'] = 'OK'
+        except Exception as e:
+            data['error'] = str(e)
+            data['status'] = 'ERROR'
+    else:
+        data['status'] = 'DISCONNECTED'
+    
+    return JsonResponse(data)
