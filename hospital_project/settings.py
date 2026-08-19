@@ -76,13 +76,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',  # Este debe estar
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Este también
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.core.middleware.ErrorLoggingMiddleware',  # 👈 AGREGAR ESTO AL FINAL
 ]
+
 
 ROOT_URLCONF = 'hospital_project.urls'
 
@@ -287,25 +289,43 @@ if IS_VERCEL:
 # Logging
 if not DEBUG:
     LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} - {name}: {message}',
+            'style': '{',
         },
-        'root': {
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'DEBUG',
+            'propagate': False,
         },
-        'loggers': {
-            'django': {
-                'handlers': ['console'],
-                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
-                'propagate': False,
-            },
+        'apps.core': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
-    }
+        'apps.users': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
 
 # ============================================================
 # EXPORTAR VARIABLES DE MONGODB PARA ACCESO GLOBAL
