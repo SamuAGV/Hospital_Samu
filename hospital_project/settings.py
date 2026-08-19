@@ -212,7 +212,8 @@ else:
 # AUTHENTICATION - Usar backend personalizado de MongoDB
 # ============================================================
 AUTHENTICATION_BACKENDS = [
-    'apps.users.backends.MongoDBBackend',
+    # 'apps.users.backends.MongoDBBackend',
+    'django.contrib.auth.backends.ModelBackend',  
 ]
 
 # Password validation (para mantener compatibilidad)
