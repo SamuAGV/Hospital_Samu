@@ -5,31 +5,158 @@
     <meta charset="UTF-8">
     <title>Reporte MedInsight</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; }
-        h1 { color: #0d47a1; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #777; }
+        @page {
+            margin: 2cm 1.5cm;
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 50pt; width: 512pt; top: 50pt; height: 80pt;
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 50pt; width: 512pt; top: 720pt; height: 40pt;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        /* --- HEADER --- */
+        #header_content {
+            border-bottom: 3px solid #0d47a1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0d47a1;
+            letter-spacing: 1px;
+        }
+        .header-sub {
+            font-size: 12px;
+            color: #666;
+            float: right;
+            margin-top: 10px;
+        }
+        .header-logo {
+            font-size: 14px;
+            color: #00897b;
+            font-weight: 600;
+        }
+
+        /* --- CONTENT --- */
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0d47a1;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .report-meta {
+            font-size: 10px;
+            color: #777;
+            margin-bottom: 25px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+        }
+        .report-meta span {
+            margin-right: 20px;
+        }
+
+        /* --- TABLE --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #0d47a1;
+            color: white;
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: left;
+            border: 1px solid #0d47a1;
+        }
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+        
+        /* --- FOOTER --- */
+        #footer_content {
+            border-top: 2px solid #0d47a1;
+            padding-top: 10px;
+            font-size: 9px;
+            color: #999;
+            text-align: center;
+        }
+        .footer-highlight {
+            color: #0d47a1;
+            font-weight: 600;
+        }
+        
+        /* --- BADGE (opcional para estado) --- */
+        .badge-green { background-color: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9px; }
+        .badge-red { background-color: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9px; }
+        .badge-warning { background-color: #ffc107; color: #333; padding: 2px 8px; border-radius: 4px; font-size: 9px; }
     </style>
 </head>
 <body>
-    <h1>Reporte de {{ report_type|title }}</h1>
-    <p><strong>Fecha de exportación:</strong> {{ fecha_exportacion }}</p>
-    <p><strong>Total de registros:</strong> {{ total_registros }}</p>
-    <p><strong>Filtros aplicados:</strong> 
-        {% if request.GET.fecha_inicio %}Fecha inicio: {{ request.GET.fecha_inicio }}{% endif %}
-        {% if request.GET.fecha_fin %} - Fecha fin: {{ request.GET.fecha_fin }}{% endif %}
-        {% if request.GET.estado %} - Estado: {{ request.GET.estado }}{% endif %}
-        {% if request.GET.tipo_consulta %} - Tipo: {{ request.GET.tipo_consulta }}{% endif %}
-        {% if request.GET.area %} - Área: {{ request.GET.area }}{% endif %}
-    </p>
-    
+
+    <!-- HEADER -->
+    <div id="header_content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div class="header-title"><i style="font-style: normal;">🏥</i> MedInsight Hospital</div>
+                <div class="header-logo">Inteligencia de Datos para Decisiones Clínicas</div>
+            </div>
+            <div class="header-sub">
+                {{ fecha_exportacion }}
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT INFO -->
+    <div class="report-title">Reporte de {{ report_type|title }}</div>
+    <div class="report-meta">
+        <span><strong>📅 Exportado:</strong> {{ fecha_exportacion }}</span>
+        <span><strong>📊 Registros:</strong> {{ total_registros }}</span>
+        
+        {% if request.GET.fecha_inicio %}
+            <span><strong>📌 Desde:</strong> {{ request.GET.fecha_inicio }}</span>
+        {% endif %}
+        {% if request.GET.fecha_fin %}
+            <span><strong>📌 Hasta:</strong> {{ request.GET.fecha_fin }}</span>
+        {% endif %}
+        {% if request.GET.estado %}
+            <span><strong>⚡ Estado:</strong> {{ request.GET.estado }}</span>
+        {% endif %}
+        {% if request.GET.tipo_consulta %}
+            <span><strong>🩺 Tipo:</strong> {{ request.GET.tipo_consulta }}</span>
+        {% endif %}
+        {% if request.GET.area %}
+            <span><strong>🏥 Área:</strong> {{ request.GET.area }}</span>
+        {% endif %}
+    </div>
+
+    <!-- DATA TABLE -->
     <table>
         <thead>
             <tr>
                 {% for key in headers %}
-                    <th>{{ key }}</th>
+                    <th>{{ key|title }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -43,9 +170,18 @@
             {% endfor %}
         </tbody>
     </table>
-    
-    <div class="footer">
-        Generado por MedInsight Hospital - {{ fecha_exportacion }}
+
+    <!-- FOOTER -->
+    <div id="footer_content">
+        <p>
+            <span class="footer-highlight">MedInsight Hospital</span> · 
+            Generado automáticamente · 
+            {{ fecha_exportacion }}
+        </p>
+        <p style="font-size: 8px; opacity: 0.6;">
+            Sistema Integral de Gestión Hospitalaria · v2.0
+        </p>
     </div>
+
 </body>
 </html>
