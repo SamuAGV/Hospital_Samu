@@ -3,23 +3,41 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime, timedelta
 import pandas as pd
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def list_appointments(request):
-    """Listar citas."""
+    """Listar citas con paginación."""
     context = {'page_title': 'Citas Médicas'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            appointments = list(db.appointments.find({}, {'_id': 0}))
-            context['appointments'] = appointments
-            context['total'] = len(appointments)
+            appointments_cursor = db.appointments.find({})
+            appointments_list = list(appointments_cursor)
             
-            # Estadísticas por estado
+            for app in appointments_list:
+                app['id'] = str(app['_id'])
+            
+            paginator = Paginator(appointments_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                appointments = paginator.page(page)
+            except PageNotAnInteger:
+                appointments = paginator.page(1)
+            except EmptyPage:
+                appointments = paginator.page(paginator.num_pages)
+            
+            context['appointments'] = appointments
+            context['total'] = len(appointments_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = appointments
+            
             status_counts = db.appointments.aggregate([
                 {'$group': {'_id': '$estado', 'count': {'$sum': 1}}}
             ])
@@ -28,6 +46,14 @@ def list_appointments(request):
         except Exception as e:
             messages.error(request, f'Error al cargar citas: {e}')
             context['appointments'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+            context['status_stats'] = {}
+    else:
+        context['appointments'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
+        context['status_stats'] = {}
     
     return render(request, 'appointments/list.html', context)
 
@@ -46,7 +72,7 @@ def create_appointment(request):
                 'fecha_registro': datetime.now().isoformat(),
             }
             
-            if db is not None:
+            if db is not None and settings.MONGO_CONNECTED:
                 db.appointments.insert_one(appointment_data)
                 messages.success(request, 'Cita agendada correctamente')
                 return redirect('appointments:list')
@@ -54,12 +80,10 @@ def create_appointment(request):
         except Exception as e:
             messages.error(request, f'Error al agendar cita: {e}')
     
-    # Cargar pacientes y médicos para el formulario
     context = {'page_title': 'Agendar Cita'}
-    
-    if db is not None:
-        context['patients'] = list(db.patients.find({}, {'_id': 0}))
-        context['doctors'] = list(db.doctors.find({}, {'_id': 0}))
+    if db is not None and settings.MONGO_CONNECTED:
+        context['patients'] = list(db.patients.find({}))
+        context['doctors'] = list(db.doctors.find({}))
     
     return render(request, 'appointments/create.html', context)
 
@@ -68,7 +92,7 @@ def appointment_detail(request, appointment_id):
     """Ver detalle de una cita."""
     context = {'page_title': 'Detalle de Cita'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
             from bson import ObjectId
             appointment = db.appointments.find_one({'_id': ObjectId(appointment_id)})
@@ -92,7 +116,7 @@ def cancel_appointment(request, appointment_id):
             from bson import ObjectId
             motivo = request.POST.get('motivo', 'Cancelada por el usuario')
             
-            if db is not None:
+            if db is not None and settings.MONGO_CONNECTED:
                 result = db.appointments.update_one(
                     {'_id': ObjectId(appointment_id)},
                     {
@@ -122,7 +146,7 @@ def reschedule_appointment(request, appointment_id):
             nueva_fecha = request.POST.get('nueva_fecha_hora')
             motivo = request.POST.get('motivo', 'Reagendada por el usuario')
             
-            if db is not None:
+            if db is not None and settings.MONGO_CONNECTED:
                 result = db.appointments.update_one(
                     {'_id': ObjectId(appointment_id)},
                     {
@@ -149,9 +173,8 @@ def check_availability(request):
     fecha = request.GET.get('fecha')
     especialidad = request.GET.get('especialidad')
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            # Contar citas en esa fecha y especialidad
             query = {'fecha_hora': {'$regex': f'^{fecha}'}}
             if especialidad:
                 query['especialidad'] = especialidad
@@ -159,7 +182,7 @@ def check_availability(request):
             count = db.appointments.count_documents(query)
             
             return JsonResponse({
-                'available': count < 20,  # Límite de citas por día
+                'available': count < 20,
                 'count': count,
                 'limit': 20,
                 'message': f'Hay {count} citas agendadas para esa fecha'

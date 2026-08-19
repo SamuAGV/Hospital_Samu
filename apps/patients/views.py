@@ -1,65 +1,122 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime
 import pandas as pd
 
-# Obtener conexión a MongoDB
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def list_patients(request):
-    """Listar todos los pacientes."""
+    """Listar todos los pacientes con paginación."""
     context = {
         'page_title': 'Pacientes',
     }
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            patients = list(db.patients.find({}, {'_id': 0}))
+            # Obtener todos los pacientes
+            patients_cursor = db.patients.find({})
+            patients_list = list(patients_cursor)
+            
+            # Convertir ObjectId a string
+            for p in patients_list:
+                p['id'] = str(p['_id'])
+            
+            # Paginación (20 pacientes por página)
+            paginator = Paginator(patients_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                patients = paginator.page(page)
+            except PageNotAnInteger:
+                patients = paginator.page(1)
+            except EmptyPage:
+                patients = paginator.page(paginator.num_pages)
+            
             context['patients'] = patients
-            context['total'] = len(patients)
+            context['total'] = len(patients_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = patients
             
             # Estadísticas
-            if patients:
-                df = pd.DataFrame(patients)
+            if patients_list:
+                df = pd.DataFrame(patients_list)
                 if 'genero' in df.columns:
                     context['mujeres'] = len(df[df['genero'] == 'Femenino'])
                     context['hombres'] = len(df[df['genero'] == 'Masculino'])
+                    
         except Exception as e:
             messages.error(request, f'Error al cargar pacientes: {e}')
             context['patients'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
     else:
-        # Datos de ejemplo para demostración
-        context['patients'] = [
-            {
-                'id_paciente': '1',
-                'nombre': 'María',
-                'apellido': 'González',
-                'genero': 'Femenino',
-                'telefono': '555-1234',
-                'email': 'maria@email.com',
-                'tipo_sangre': 'O+',
-                'edad': 45
-            },
-            {
-                'id_paciente': '2',
-                'nombre': 'Juan',
-                'apellido': 'Pérez',
-                'genero': 'Masculino',
-                'telefono': '555-5678',
-                'email': 'juan@email.com',
-                'tipo_sangre': 'A+',
-                'edad': 32
-            }
-        ]
-        context['total'] = 2
-        context['mujeres'] = 1
-        context['hombres'] = 1
+        context['patients'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
+        context['mujeres'] = 0
+        context['hombres'] = 0
     
     return render(request, 'patients/list.html', context)
+
+@login_required
+def search_patients(request):
+    """Buscar pacientes con paginación."""
+    query = request.GET.get('q', '')
+    context = {
+        'page_title': 'Buscar Pacientes',
+        'query': query,
+    }
+    
+    if query and db is not None and settings.MONGO_CONNECTED:
+        try:
+            patients_list = list(db.patients.find({
+                '$or': [
+                    {'nombre': {'$regex': query, '$options': 'i'}},
+                    {'apellido': {'$regex': query, '$options': 'i'}},
+                    {'telefono': {'$regex': query, '$options': 'i'}},
+                    {'email': {'$regex': query, '$options': 'i'}}
+                ]
+            }))
+            
+            for p in patients_list:
+                p['id'] = str(p['_id'])
+            
+            # Paginación
+            paginator = Paginator(patients_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                patients = paginator.page(page)
+            except PageNotAnInteger:
+                patients = paginator.page(1)
+            except EmptyPage:
+                patients = paginator.page(paginator.num_pages)
+            
+            context['patients'] = patients
+            context['total'] = len(patients_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = patients
+            
+        except Exception as e:
+            messages.error(request, f'Error en la búsqueda: {e}')
+            context['patients'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+    else:
+        context['patients'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
+    
+    return render(request, 'patients/search.html', context)
+
+# ... resto de funciones (create_patient, patient_detail, edit_patient, delete_patient) iguales
+# ... (resto de las funciones igual pero con la variable db corregida)
 
 @login_required
 def create_patient(request):

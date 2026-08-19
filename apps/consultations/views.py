@@ -3,33 +3,64 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime
 import pandas as pd
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def list_consultations(request):
-    """Listar todas las consultas."""
+    """Listar todas las consultas con paginación."""
     context = {'page_title': 'Consultas Médicas'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            consultations = list(db.consultations.find({}, {'_id': 0}))
+            consultations_cursor = db.consultations.find({})
+            consultations_list = list(consultations_cursor)
+            
+            # Convertir ObjectId a string
+            for c in consultations_list:
+                c['id'] = str(c['_id'])
+            
+            # Paginación
+            paginator = Paginator(consultations_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                consultations = paginator.page(page)
+            except PageNotAnInteger:
+                consultations = paginator.page(1)
+            except EmptyPage:
+                consultations = paginator.page(paginator.num_pages)
+            
             context['consultations'] = consultations
-            context['total'] = len(consultations)
+            context['total'] = len(consultations_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = consultations
             
             # Estadísticas
-            if consultations:
-                df = pd.DataFrame(consultations)
+            if consultations_list:
+                df = pd.DataFrame(consultations_list)
                 if 'tipo_consulta' in df.columns:
                     context['tipos'] = df['tipo_consulta'].value_counts().to_dict()
+                    
         except Exception as e:
             messages.error(request, f'Error al cargar consultas: {e}')
             context['consultations'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+            context['tipos'] = {}
+    else:
+        context['consultations'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
+        context['tipos'] = {}
     
     return render(request, 'consultations/list.html', context)
 
+# ... resto de funciones (create_consultation, consultation_detail, etc.)
 @login_required
 def create_consultation(request):
     """Crear una nueva consulta."""

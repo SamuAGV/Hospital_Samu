@@ -2,20 +2,40 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def dashboard(request):
     """Dashboard de laboratorio."""
     context = {'page_title': 'Laboratorio'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            requests = list(db.lab_requests.find({}, {'_id': 0}))
+            requests_cursor = db.lab_requests.find({})
+            requests_list = list(requests_cursor)
+            
+            for r in requests_list:
+                r['id'] = str(r['_id'])
+            
+            # Paginación
+            paginator = Paginator(requests_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                requests = paginator.page(page)
+            except PageNotAnInteger:
+                requests = paginator.page(1)
+            except EmptyPage:
+                requests = paginator.page(paginator.num_pages)
+            
             context['requests'] = requests
-            context['total'] = len(requests)
+            context['total'] = len(requests_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = requests
             
             # Por estado
             status_counts = db.lab_requests.aggregate([
@@ -26,6 +46,14 @@ def dashboard(request):
         except Exception as e:
             messages.error(request, f'Error al cargar laboratorio: {e}')
             context['requests'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+            context['status_counts'] = {}
+    else:
+        context['requests'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
+        context['status_counts'] = {}
     
     return render(request, 'laboratory/dashboard.html', context)
 
@@ -44,7 +72,7 @@ def create_request(request):
                 'observaciones': request.POST.get('observaciones')
             }
             
-            if db is not None:
+            if db is not None and settings.MONGO_CONNECTED:
                 db.lab_requests.insert_one(request_data)
                 messages.success(request, 'Solicitud de laboratorio registrada')
                 return redirect('laboratory:dashboard')
@@ -53,9 +81,9 @@ def create_request(request):
             messages.error(request, f'Error al registrar solicitud: {e}')
     
     context = {'page_title': 'Nueva Solicitud de Laboratorio'}
-    if db is not None:
-        context['patients'] = list(db.patients.find({}, {'_id': 0}))
-        context['doctors'] = list(db.doctors.find({}, {'_id': 0}))
+    if db is not None and settings.MONGO_CONNECTED:
+        context['patients'] = list(db.patients.find({}))
+        context['doctors'] = list(db.doctors.find({}))
     
     return render(request, 'laboratory/create_request.html', context)
 
@@ -64,7 +92,7 @@ def request_detail(request, request_id):
     """Ver detalle de solicitud."""
     context = {'page_title': 'Detalle de Solicitud'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
             from bson import ObjectId
             lab_request = db.lab_requests.find_one({'_id': ObjectId(request_id)})
@@ -92,7 +120,7 @@ def add_result(request, request_id):
                 'estado': 'Completado'
             }
             
-            if db is not None:
+            if db is not None and settings.MONGO_CONNECTED:
                 db.lab_requests.update_one(
                     {'_id': ObjectId(request_id)},
                     {'$set': update_data}
@@ -109,7 +137,7 @@ def lab_stats(request):
     """Estadísticas de laboratorio."""
     context = {'page_title': 'Estadísticas de Laboratorio'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
             # Por tipo de estudio
             pipeline = [
@@ -122,6 +150,7 @@ def lab_stats(request):
                 {'$group': {'_id': '$estado', 'count': {'$sum': 1}}}
             ]
             context['por_estado'] = list(db.lab_requests.aggregate(pipeline_estado))
+            context['total'] = db.lab_requests.count_documents({})
             
         except Exception as e:
             messages.error(request, f'Error al obtener estadísticas: {e}')

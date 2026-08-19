@@ -3,23 +3,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def list_hospitalizations(request):
-    """Listar hospitalizaciones."""
+    """Listar hospitalizaciones con paginación."""
     context = {'page_title': 'Hospitalizaciones'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            hospitalizations = list(db.hospitalizations.find({}))
-            # Convertir ObjectId a string para los templates
-            for h in hospitalizations:
+            hospitalizations_cursor = db.hospitalizations.find({})
+            hospitalizations_list = list(hospitalizations_cursor)
+            
+            for h in hospitalizations_list:
                 h['id'] = str(h['_id'])
+            
+            # Paginación
+            paginator = Paginator(hospitalizations_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                hospitalizations = paginator.page(page)
+            except PageNotAnInteger:
+                hospitalizations = paginator.page(1)
+            except EmptyPage:
+                hospitalizations = paginator.page(paginator.num_pages)
+            
             context['hospitalizations'] = hospitalizations
-            context['total'] = len(hospitalizations)
+            context['total'] = len(hospitalizations_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = hospitalizations
             
             # Pacientes activos
             active = db.hospitalizations.count_documents({'estado': 'Activa'})
@@ -28,9 +45,13 @@ def list_hospitalizations(request):
         except Exception as e:
             messages.error(request, f'Error al cargar hospitalizaciones: {e}')
             context['hospitalizations'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+            context['active'] = 0
     else:
         context['hospitalizations'] = []
         context['total'] = 0
+        context['is_paginated'] = False
         context['active'] = 0
     
     return render(request, 'hospitalizations/list.html', context)

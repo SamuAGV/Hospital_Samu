@@ -39,6 +39,15 @@
         </div>
     </div>
 
+    <!-- Información de paginación -->
+    <div class="row mb-3">
+        <div class="col-12 text-end">
+            <span class="text-muted small">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ paginator.count }} citas
+            </span>
+        </div>
+    </div>
+
     <!-- Tabla de citas -->
     <div class="card">
         <div class="card-body table-responsive">
@@ -98,6 +107,9 @@
             </table>
         </div>
     </div>
+
+    <!-- Paginación -->
+    {% include 'includes/pagination.html' %}
 </div>
 
 <script>
@@ -118,6 +130,25 @@ function cancelAppointment(appointmentId) {
                 }
             });
         }
+    }
+}
+
+function rescheduleAppointment(appointmentId) {
+    const nuevaFecha = prompt('Ingresa la nueva fecha y hora (YYYY-MM-DD HH:MM):');
+    if (nuevaFecha) {
+        const motivo = prompt('Motivo del reagendamiento:');
+        fetch(`/appointments/${appointmentId}/reschedule/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `nueva_fecha_hora=${encodeURIComponent(nuevaFecha)}&motivo=${encodeURIComponent(motivo)}`
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
     }
 }
 </script>

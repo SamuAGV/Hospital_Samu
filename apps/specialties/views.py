@@ -3,16 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def list_specialties(request):
     """Listar especialidades."""
     context = {'page_title': 'Especialidades Médicas'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            specialties = list(db.specialties.find({}, {'_id': 0}))
+            specialties = list(db.specialties.find({}))
             context['specialties'] = specialties
             
             # Obtener estadísticas de consultas por especialidad
@@ -22,12 +22,10 @@ def list_specialties(request):
             ]
             stats_list = list(db.consultations.aggregate(pipeline))
             
-            # Convertir a diccionario para fácil acceso
             stats_dict = {}
             for item in stats_list:
-                if item['_id']:  # Si la especialidad no es None
+                if item['_id']:
                     stats_dict[item['_id']] = item['total']
-            
             context['stats'] = stats_dict
             
         except Exception as e:
@@ -35,16 +33,12 @@ def list_specialties(request):
             context['specialties'] = []
             context['stats'] = {}
     else:
-        # Datos de ejemplo
-        context['specialties'] = [
-            {'id_especialidad': 1, 'nombre': 'Medicina General', 'descripcion': 'Atención primaria', 'costo_consulta': 350},
-            {'id_especialidad': 2, 'nombre': 'Cardiología', 'descripcion': 'Enfermedades del corazón', 'costo_consulta': 650},
-            {'id_especialidad': 3, 'nombre': 'Pediatría', 'descripcion': 'Atención infantil', 'costo_consulta': 400},
-        ]
+        context['specialties'] = []
         context['stats'] = {}
     
     return render(request, 'specialties/list.html', context)
 
+# ... (resto de las funciones igual pero con la variable db corregida)
 @login_required
 def create_specialty(request):
     """Crear nueva especialidad."""

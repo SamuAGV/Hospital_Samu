@@ -3,58 +3,105 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import datetime, timedelta
 import pandas as pd
 
-db = getattr(settings, 'mongo_db', None)
+db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
 @login_required
 def dashboard(request):
     """Dashboard de farmacia."""
     context = {'page_title': 'Farmacia e Inventario'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            medicines = list(db.medicines.find({}, {'_id': 0}))
-            context['medicines'] = medicines
-            context['total'] = len(medicines)
+            medicines_cursor = db.medicines.find({})
+            medicines_list = list(medicines_cursor)
+            
+            for m in medicines_list:
+                m['id'] = str(m['_id'])
+            
+            context['medicines'] = medicines_list
+            context['total'] = len(medicines_list)
             
             # Medicamentos con bajo stock
-            low_stock = [m for m in medicines if m.get('stock', 0) <= m.get('stock_minimo', 10)]
+            low_stock = [m for m in medicines_list if m.get('stock', 0) <= m.get('stock_minimo', 10)]
             context['low_stock'] = len(low_stock)
             
             # Medicamentos próximos a caducar (30 días)
             today = datetime.now()
             expiring = []
-            for m in medicines:
+            for m in medicines_list:
                 if 'fecha_caducidad' in m:
                     fecha_cad = datetime.fromisoformat(m['fecha_caducidad'])
                     if (fecha_cad - today).days <= 30:
                         expiring.append(m)
             context['expiring'] = len(expiring)
             
+            # Valor total del inventario
+            total_value = sum(m.get('stock', 0) * m.get('precio_unitario', 0) for m in medicines_list)
+            context['total_value'] = total_value
+            
         except Exception as e:
             messages.error(request, f'Error al cargar farmacia: {e}')
             context['medicines'] = []
+            context['total'] = 0
+            context['low_stock'] = 0
+            context['expiring'] = 0
+            context['total_value'] = 0
+    else:
+        context['medicines'] = []
+        context['total'] = 0
+        context['low_stock'] = 0
+        context['expiring'] = 0
+        context['total_value'] = 0
     
     return render(request, 'pharmacy/dashboard.html', context)
 
 @login_required
 def list_medicines(request):
-    """Listar medicamentos."""
+    """Listar medicamentos con paginación."""
     context = {'page_title': 'Medicamentos'}
     
-    if db is not None:
+    if db is not None and settings.MONGO_CONNECTED:
         try:
-            medicines = list(db.medicines.find({}, {'_id': 0}))
+            medicines_cursor = db.medicines.find({})
+            medicines_list = list(medicines_cursor)
+            
+            for m in medicines_list:
+                m['id'] = str(m['_id'])
+            
+            # Paginación
+            paginator = Paginator(medicines_list, 20)
+            page = request.GET.get('page', 1)
+            
+            try:
+                medicines = paginator.page(page)
+            except PageNotAnInteger:
+                medicines = paginator.page(1)
+            except EmptyPage:
+                medicines = paginator.page(paginator.num_pages)
+            
             context['medicines'] = medicines
-            context['total'] = len(medicines)
+            context['total'] = len(medicines_list)
+            context['is_paginated'] = True
+            context['paginator'] = paginator
+            context['page_obj'] = medicines
+            
         except Exception as e:
             messages.error(request, f'Error al cargar medicamentos: {e}')
             context['medicines'] = []
+            context['total'] = 0
+            context['is_paginated'] = False
+    else:
+        context['medicines'] = []
+        context['total'] = 0
+        context['is_paginated'] = False
     
     return render(request, 'pharmacy/list_medicines.html', context)
 
+# ... resto de funciones (create_medicine, medicine_detail, etc.)
 @login_required
 def create_medicine(request):
     """Crear un nuevo medicamento."""
