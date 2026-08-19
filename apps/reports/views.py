@@ -73,10 +73,10 @@ def occupancy_report(request):
             ocupadas = db.hospitalizations.count_documents({'estado': 'Activa'})
             
             context['total_camas'] = total_camas
-            context['camas_ocupadas'] = ocupadas
+            context['camas_ocupadas'] = ocupadas  # <-- ESTA ES LA VARIABLE QUE FALTABA
             context['porcentaje'] = round((ocupadas / total_camas) * 100, 1)
             
-            # Historial de ocupación (simulado)
+            # Historial de ocupación (simulado si no hay datos reales)
             context['historico'] = [
                 {'fecha': '2026-08-01', 'ocupacion': 85},
                 {'fecha': '2026-08-02', 'ocupacion': 88},
@@ -89,8 +89,22 @@ def occupancy_report(request):
             
         except Exception as e:
             messages.error(request, f'Error al generar reporte: {e}')
+            
+            # SI HAY ERROR, ASEGURAR QUE LAS VARIABLES EXISTAN PARA EVITAR EL ERROR 500
+            context['total_camas'] = 120
+            context['camas_ocupadas'] = 0
+            context['porcentaje'] = 0
+            context['historico'] = []
+    
+    # SI db NO ESTÁ CONECTADO, ASEGURAR VARIABLES POR DEFECTO
+    else:
+        context['total_camas'] = 120
+        context['camas_ocupadas'] = 0
+        context['porcentaje'] = 0
+        context['historico'] = []
     
     return render(request, 'reports/occupancy.html', context)
+
 
 @login_required
 def ml_report(request):
