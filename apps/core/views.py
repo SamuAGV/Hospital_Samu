@@ -4,6 +4,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 import json
 from collections import defaultdict
+from django.shortcuts import render, redirect
 
 db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
