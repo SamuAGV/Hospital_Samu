@@ -157,20 +157,31 @@ if MONGO_URI:
 # DATABASE - Usar SQLite solo para sesiones (en memoria en Vercel)
 # ============================================================
 if IS_VERCEL:
-    # En Vercel, usar SQLite en memoria solo para sesiones
+    import dj_database_url
+    
+    # Usar PostgreSQL desde la variable DATABASE_URL
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
+    
+    # Configuración adicional para producción
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 else:
+    # Desarrollo: SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 # Usar sesiones basadas en cache para evitar escritura en disco
 # ============================================================
