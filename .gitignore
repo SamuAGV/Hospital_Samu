@@ -1,5 +1,30 @@
-.env
-venv/
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+Thumbs.db
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# Vercel
+/tmp
+.vercel
+
+# Entorno virtual
+venv/
+env/
+.env
+
+# Logs
+*.log
+*.log.*
+
+# ML Models (opcional, si quieres que se suban quita esta línea)
+# ml/modelos/*.pkl
