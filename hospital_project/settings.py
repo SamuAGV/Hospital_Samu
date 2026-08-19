@@ -8,7 +8,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 import hashlib
 import json
-import dj_database_url
 
 # Cargar variables de entorno
 load_dotenv()
@@ -160,6 +159,7 @@ if MONGO_URI:
 # DATABASE - Usar SQLite solo para sesiones (en memoria en Vercel)
 # ============================================================
 if IS_VERCEL:
+    import dj_database_url
     
     # Usar PostgreSQL desde la variable DATABASE_URL
     DATABASES = {
@@ -183,6 +183,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 
 # Usar sesiones basadas en cache para evitar escritura en disco
