@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import hashlib
 import json
+import dj_database_url
 
 # Cargar variables de entorno
 load_dotenv()
@@ -157,7 +158,6 @@ if MONGO_URI:
 # DATABASE - Usar SQLite solo para sesiones (en memoria en Vercel)
 # ============================================================
 if IS_VERCEL:
-    import dj_database_url
     
     # Usar PostgreSQL desde la variable DATABASE_URL
     DATABASES = {
@@ -411,3 +411,40 @@ if IS_VERCEL:
     except Exception as e:
         print(f"⚠️ Error en configuración de Vercel: {e}", file=sys.stderr)
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} - {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # Cambiar a DEBUG para ver todo
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.core': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.machine_learning': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
