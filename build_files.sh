@@ -1,22 +1,22 @@
 #!/bin/bash
-# build_files.sh - Optimizado para Vercel con PostgreSQL
+# build_files.sh
 
 echo "🚀 Iniciando build de Vercel..."
 
-# 1. Instalar dependencias
+# Instalar dependencias
 echo "📦 Instalando dependencias..."
 pip install -r requirements.txt
 
-# 2. Recolectar archivos estáticos (CRÍTICO para Vercel)
+# Recolectar archivos estáticos
 echo "🎨 Recolectando archivos estáticos..."
 python manage.py collectstatic --noinput
 
-# 3. Ejecutar migraciones (SIEMPRE, sin verificar SQLite)
-echo "📦 Ejecutando migraciones en PostgreSQL..."
+# 🔥 EJECUTAR MIGRACIONES (Esto creará la tabla auth_user en PostgreSQL)
+echo "📦 Ejecutando migraciones forzadas en PostgreSQL..."
 python manage.py migrate --noinput
 
-# 4. Sincronizar usuarios desde MongoDB a PostgreSQL
-echo "🔄 Sincronizando usuarios desde MongoDB..."
+# 🔥 SINCRONIZAR USUARIOS DE MONGODB A POSTGRESQL
+echo "🔄 Sincronizando usuarios desde MongoDB a PostgreSQL..."
 python manage.py sync_users
 
 echo "✅ Build completado exitosamente!"
