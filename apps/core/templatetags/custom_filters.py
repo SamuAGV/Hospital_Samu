@@ -1,17 +1,14 @@
+# apps/core/templatetags/custom_filters.py
 from django import template
 
 register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
-    """Obtener un valor de un diccionario por su clave."""
+    """
+    Devuelve el valor de un diccionario por su clave.
+    Uso en templates: {{ dict|get_item:key }}
+    """
     if dictionary is None:
-        return 0
-    if not isinstance(dictionary, dict):
-        return 0
-    return dictionary.get(key, 0)
-
-@register.filter
-def get_attr(obj, attr):
-    """Obtener un atributo de un objeto por su nombre."""
-    return getattr(obj, attr, None)
+        return None
+    return dictionary.get(key)

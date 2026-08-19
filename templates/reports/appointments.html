@@ -7,9 +7,29 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="section-title mb-0"><i class="fas fa-calendar-check"></i> Reporte de Citas</h1>
         <div>
-            <a href="{% url 'reports:export' 'appointments' %}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Exportar
-            </a>
+            <!-- Dropdown de Exportar -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'appointments' %}?formato=csv{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                            CSV
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'appointments' %}?formato=excel{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                            Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'appointments' %}?formato=pdf{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                            PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <a href="{% url 'reports:dashboard' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
@@ -20,18 +40,26 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Fecha Inicio</label>
-                    <input type="date" name="fecha_inicio" class="form-control">
+                    <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Fecha Fin</label>
-                    <input type="date" name="fecha_fin" class="form-control">
+                    <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter"></i> Filtrar
-                    </button>
+                <div class="col-md-3">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Programada" {% if estado == 'Programada' %}selected{% endif %}>Programada</option>
+                        <option value="Cancelada" {% if estado == 'Cancelada' %}selected{% endif %}>Cancelada</option>
+                        <option value="Atendida" {% if estado == 'Atendida' %}selected{% endif %}>Atendida</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                    <a href="{% url 'reports:appointments' %}" class="btn btn-secondary">Limpiar</a>
                 </div>
             </form>
         </div>
@@ -105,5 +133,8 @@
             </table>
         </div>
     </div>
+
+    <!-- Paginación -->
+    {% include 'includes/pagination.html' %}
 </div>
 {% endblock %}

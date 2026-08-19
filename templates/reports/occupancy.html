@@ -7,12 +7,56 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="section-title mb-0"><i class="fas fa-bed"></i> Reporte de Ocupación</h1>
         <div>
-            <a href="{% url 'reports:export' 'occupancy' %}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Exportar
-            </a>
+            <!-- Dropdown de Exportar -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'occupancy' %}?formato=csv{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}">
+                            CSV
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'occupancy' %}?formato=excel{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}">
+                            Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'occupancy' %}?formato=pdf{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}">
+                            PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <a href="{% url 'reports:dashboard' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Área / Especialidad</label>
+                    <input type="text" name="area" class="form-control" placeholder="Ej: Cardiología" value="{{ area|default:'' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                    <a href="{% url 'reports:occupancy' %}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </form>
         </div>
     </div>
 

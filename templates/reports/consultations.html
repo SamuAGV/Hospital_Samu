@@ -7,16 +7,36 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="section-title mb-0"><i class="fas fa-stethoscope"></i> Reporte de Consultas</h1>
         <div>
-            <a href="{% url 'reports:export' 'consultations' %}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Exportar
-            </a>
+            <!-- Dropdown de Exportar -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'consultations' %}?formato=csv{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.tipo_consulta %}&tipo_consulta={{ request.GET.tipo_consulta }}{% endif %}">
+                            CSV
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'consultations' %}?formato=excel{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.tipo_consulta %}&tipo_consulta={{ request.GET.tipo_consulta }}{% endif %}">
+                            Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'reports:export' 'consultations' %}?formato=pdf{% if request.GET.fecha_inicio %}&fecha_inicio={{ request.GET.fecha_inicio }}{% endif %}{% if request.GET.fecha_fin %}&fecha_fin={{ request.GET.fecha_fin }}{% endif %}{% if request.GET.tipo_consulta %}&tipo_consulta={{ request.GET.tipo_consulta }}{% endif %}">
+                            PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <a href="{% url 'reports:dashboard' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
     </div>
 
-    <!-- Filtros y Buscador -->
+    <!-- Filtros -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
@@ -29,13 +49,17 @@
                     <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Área / Especialidad</label>
-                    <input type="text" name="area" class="form-control" placeholder="Ej: Cardiología" value="{{ area|default:'' }}">
+                    <label class="form-label">Tipo de Consulta</label>
+                    <select name="tipo_consulta" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Primera vez" {% if tipo_consulta == 'Primera vez' %}selected{% endif %}>Primera vez</option>
+                        <option value="Seguimiento" {% if tipo_consulta == 'Seguimiento' %}selected{% endif %}>Seguimiento</option>
+                        <option value="Urgencia" {% if tipo_consulta == 'Urgencia' %}selected{% endif %}>Urgencia</option>
+                    </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter"></i> Filtrar y Buscar
-                    </button>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                    <a href="{% url 'reports:consultations' %}" class="btn btn-secondary">Limpiar</a>
                 </div>
             </form>
         </div>
@@ -83,5 +107,8 @@
             </table>
         </div>
     </div>
+
+    <!-- Paginación -->
+    {% include 'includes/pagination.html' %}
 </div>
 {% endblock %}
