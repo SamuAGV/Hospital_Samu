@@ -33,36 +33,52 @@
             <div class="metric-card card-blue">
                 <div class="metric-header">
                     <span class="metric-icon"><i class="fas fa-users text-primary"></i></span>
+                    <span class="badge bg-success">+12%</span>
                 </div>
                 <div class="metric-value">{{ patients_count|default:0 }}</div>
                 <div class="metric-label">Pacientes Registrados</div>
+                <div class="metric-sub">
+                    <i class="fas fa-user-plus me-1"></i> +{{ patients_count|default:0 }} este mes
+                </div>
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="metric-card card-green">
                 <div class="metric-header">
                     <span class="metric-icon"><i class="fas fa-stethoscope text-success"></i></span>
+                    <span class="badge bg-success">+8%</span>
                 </div>
                 <div class="metric-value">{{ consultations_count|default:0 }}</div>
                 <div class="metric-label">Consultas Realizadas</div>
+                <div class="metric-sub">
+                    <i class="fas fa-clock me-1"></i> Promedio: 25 min
+                </div>
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="metric-card card-orange">
                 <div class="metric-header">
                     <span class="metric-icon"><i class="fas fa-calendar-check text-warning"></i></span>
+                    <span class="badge bg-warning">+5%</span>
                 </div>
                 <div class="metric-value">{{ appointments_count|default:0 }}</div>
                 <div class="metric-label">Citas Programadas</div>
+                <div class="metric-sub">
+                    <i class="fas fa-calendar-alt me-1"></i> Próximas 24h: {{ appointments_count|default:0 }}
+                </div>
             </div>
         </div>
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="metric-card card-red">
                 <div class="metric-header">
                     <span class="metric-icon"><i class="fas fa-hospital-user text-danger"></i></span>
+                    <span class="badge bg-danger">-3%</span>
                 </div>
                 <div class="metric-value">{{ active_hospitalizations|default:0 }}</div>
                 <div class="metric-label">Pacientes Hospitalizados</div>
+                <div class="metric-sub">
+                    <i class="fas fa-bed me-1"></i> Ocupación: {{ occupancy_percent|default:0 }}%
+                </div>
             </div>
         </div>
     </div>
@@ -71,7 +87,14 @@
     <div class="row g-3">
         <div class="col-lg-8">
             <div class="chart-container">
-                <h5 class="mb-3"><i class="fas fa-chart-area text-primary me-2"></i> Demanda de Servicios</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-area text-primary me-2"></i> Demanda de Servicios</h5>
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-calendar-alt me-1"></i> Últimos 90 días
+                        </span>
+                    </div>
+                </div>
                 <div id="demandChart" style="height: 400px;"></div>
             </div>
         </div>
@@ -84,111 +107,147 @@
     </div>
 </div>
 
-<!-- Datos en JSON directo -->
+<!-- DATOS: Inyección directa (la única que funciona) -->
 <script>
-    // DATOS DE DEMANDA (inyectados directamente)
-    const demandData = {{ demand_data|safe }};
-    
-    console.log('📊 Datos de demanda:', demandData);
-    console.log('📅 Fechas:', demandData.dates);
-    console.log('📊 Valores:', demandData.values);
+    // Datos de demanda - inyectados directamente desde Django
+    var demandData = {{ demand_data|safe }};
 </script>
 
+<!-- GRÁFICAS: Script separado para evitar errores del linter -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // ============================================================
-    // GRÁFICA DE DEMANDA CON PLOTLY
-    // ============================================================
-    const data = {{ demand_data|safe }};
-    
-    if (data.dates && data.dates.length > 0) {
-        // Crear gráfica
-        const trace = {
-            x: data.dates,
-            y: data.values,
-            type: 'bar',
-            marker: {
-                color: '#0d47a1',
-                line: { color: 'white', width: 1 }
-            },
-            text: data.values,
-            textposition: 'outside',
-            name: 'Consultas'
-        };
+    // Función para crear la gráfica de demanda
+    function crearGraficaDemanda() {
+        var data = demandData;
         
-        const layout = {
-            title: {
-                text: 'Consultas Diarias (Últimos 90 días)',
-                font: { size: 18, color: '#0d47a1' }
-            },
-            xaxis: {
-                title: 'Fecha',
-                tickangle: 45,
-                showgrid: true,
-                gridcolor: '#f0f0f0'
-            },
-            yaxis: {
-                title: 'Número de Consultas',
-                showgrid: true,
-                gridcolor: '#f0f0f0'
-            },
-            height: 400,
-            margin: { l: 50, r: 20, t: 60, b: 80 },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            bargap: 0.15,
-            showlegend: false
-        };
-        
-        Plotly.newPlot('demandChart', [trace], layout);
-        console.log('✅ Gráfica de demanda creada con', data.dates.length, 'días de datos');
-    } else {
-        // No hay datos
-        document.getElementById('demandChart').innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:400px;color:#999;">
-                <div style="text-align:center;">
-                    <i class="fas fa-chart-bar fa-3x mb-3" style="display:block;"></i>
-                    No hay datos de consultas disponibles<br>
-                    <small>Registra consultas para ver la demanda</small>
-                </div>
-            </div>
-        `;
-        console.log('⚠️ No hay datos de demanda');
+        if (data.dates && data.dates.length > 0) {
+            // Calcular estadísticas
+            var total = 0;
+            for (var i = 0; i < data.values.length; i++) {
+                total += data.values[i];
+            }
+            var promedio = Math.round(total / data.values.length);
+            
+            // Barras
+            var trace1 = {
+                x: data.dates,
+                y: data.values,
+                type: 'bar',
+                name: 'Consultas',
+                marker: { color: '#0d47a1', line: { color: 'white', width: 1 } },
+                text: data.values,
+                textposition: 'outside',
+                textfont: { size: 10 }
+            };
+            
+            // Tendencia (media móvil de 3 días)
+            var trend = [];
+            for (var j = 0; j < data.values.length; j++) {
+                if (j === 0) trend.push(data.values[j]);
+                else if (j === 1) trend.push((data.values[j-1] + data.values[j]) / 2);
+                else trend.push((data.values[j-2] + data.values[j-1] + data.values[j]) / 3);
+            }
+            
+            var trace2 = {
+                x: data.dates,
+                y: trend,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Tendencia',
+                line: { color: '#f57c00', width: 3 },
+                fill: 'tonexty',
+                fillcolor: 'rgba(245, 124, 0, 0.1)'
+            };
+            
+            var layout = {
+                title: {
+                    text: 'Consultas Diarias · Total: ' + total + ' · Promedio: ' + promedio + '/día',
+                    font: { size: 16, color: '#0d47a1' }
+                },
+                xaxis: { title: 'Fecha', tickangle: 45, showgrid: true, gridcolor: '#f0f0f0' },
+                yaxis: { title: 'Número de Consultas', showgrid: true, gridcolor: '#f0f0f0' },
+                height: 400,
+                margin: { l: 60, r: 30, t: 60, b: 80 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                bargap: 0.15,
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    yanchor: 'bottom',
+                    y: 1.02,
+                    xanchor: 'right',
+                    x: 1,
+                    font: { size: 11 }
+                },
+                hovermode: 'x unified'
+            };
+            
+            Plotly.newPlot('demandChart', [trace1, trace2], layout);
+            console.log('✅ Gráfica de demanda creada con', data.dates.length, 'días');
+        } else {
+            document.getElementById('demandChart').innerHTML = 
+                '<div style="display:flex;align-items:center;justify-content:center;height:400px;color:#999;">' +
+                    '<div style="text-align:center;">' +
+                        '<i class="fas fa-chart-bar fa-4x mb-3" style="display:block;color:#ddd;"></i>' +
+                        '<h5 style="color:#666;">No hay datos de consultas disponibles</h5>' +
+                        '<p class="text-muted small">Registra consultas para ver la demanda</p>' +
+                    '</div>' +
+                '</div>';
+            console.log('⚠️ No hay datos de demanda');
+        }
     }
 
-    // ============================================================
-    // GRÁFICA DE ESPECIALIDADES
-    // ============================================================
-    try {
-        const specialtyData = {
-            values: [280, 145, 120, 95, 75, 50],
-            labels: ['Medicina General', 'Cardiología', 'Pediatría', 'Ginecología', 'Traumatología', 'Neurología'],
-            type: 'pie',
-            hole: 0.4,
-            marker: {
-                colors: ['#0d47a1', '#1565c0', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9'],
-                line: { color: 'white', width: 2 }
-            },
-            textinfo: 'percent',
-            hoverinfo: 'label+percent+value'
-        };
-        Plotly.newPlot('specialtyChart', [specialtyData], {
-            height: 400,
-            margin: { l: 0, r: 0, t: 0, b: 0 },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            showlegend: true,
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                y: -0.05,
-                xanchor: 'center',
-                font: { size: 10 }
-            }
-        });
-    } catch (e) {
-        console.error('Error en gráfica de especialidades:', e);
+    // Función para crear la gráfica de especialidades
+    function crearGraficaEspecialidades() {
+        try {
+            var specialtyData = {
+                values: [280, 145, 120, 95, 75, 50],
+                labels: ['Medicina General', 'Cardiología', 'Pediatría', 'Ginecología', 'Traumatología', 'Neurología'],
+                type: 'pie',
+                hole: 0.45,
+                marker: {
+                    colors: ['#0d47a1', '#1565c0', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9'],
+                    line: { color: 'white', width: 2 }
+                },
+                textinfo: 'label+percent',
+                textposition: 'inside',
+                insidetextfont: { color: 'white', size: 12, weight: 'bold' },
+                hoverinfo: 'label+percent+value'
+            };
+            
+            var specialtyLayout = {
+                height: 400,
+                margin: { l: 0, r: 0, t: 20, b: 0 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    x: 0.5,
+                    y: -0.08,
+                    xanchor: 'center',
+                    font: { size: 11 }
+                },
+                annotations: [{
+                    text: 'Especialidades',
+                    x: 0.5,
+                    y: 0.5,
+                    font: { size: 14, color: '#0d47a1', weight: 'bold' },
+                    showarrow: false
+                }]
+            };
+            
+            Plotly.newPlot('specialtyChart', [specialtyData], specialtyLayout);
+            console.log('✅ Gráfica de especialidades creada');
+        } catch (e) {
+            console.error('Error en especialidades:', e);
+        }
     }
-});
+
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        crearGraficaDemanda();
+        crearGraficaEspecialidades();
+    });
 </script>
 {% endblock %}

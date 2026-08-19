@@ -1,15 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.http import JsonResponse
 from datetime import datetime, timedelta
-import plotly.graph_objs as go
-import plotly.utils
 import json
 from collections import defaultdict
-import logging
-
-logger = logging.getLogger(__name__)
 
 db = settings.MONGO_DB if hasattr(settings, 'MONGO_DB') else None
 
@@ -34,9 +28,16 @@ def dashboard(request):
             total_camas = 120
             context['occupancy_percent'] = round((context['active_hospitalizations'] / total_camas) * 100, 1) if total_camas > 0 else 0
             
-            # OBTENER DATOS EN FORMATO SIMPLE
+            # Obtener datos de demanda
             demand_data = get_demand_data_simple()
             context['demand_data'] = json.dumps(demand_data)
+            
+            print(f"📊 Dashboard cargado:")
+            print(f"  - Pacientes: {context['patients_count']}")
+            print(f"  - Consultas: {context['consultations_count']}")
+            print(f"  - Citas: {context['appointments_count']}")
+            print(f"  - Hospitalizados: {context['active_hospitalizations']}")
+            print(f"  - Días con datos: {len(demand_data.get('dates', []))}")
             
         except Exception as e:
             print(f"❌ Error en dashboard: {e}")
@@ -47,7 +48,7 @@ def dashboard(request):
     return render(request, 'core/dashboard.html', context)
 
 def get_demand_data_simple():
-    """Obtener datos de demanda en formato simple (dict)."""
+    """Obtener datos de demanda en formato simple."""
     if db is None:
         return {'dates': [], 'values': []}
     
@@ -55,19 +56,13 @@ def get_demand_data_simple():
         today = datetime.now()
         start_date = today - timedelta(days=90)
         
-        print(f"🔍 Buscando consultas desde: {start_date.isoformat()}")
-        
-        # Obtener consultas
         consultations = list(db.consultations.find({
             'fecha_hora': {'$gte': start_date.isoformat()}
         }))
         
-        print(f"📊 Consultas encontradas: {len(consultations)}")
-        
         if len(consultations) == 0:
             return {'dates': [], 'values': []}
         
-        # Agrupar por fecha
         daily_counts = defaultdict(int)
         for consulta in consultations:
             fecha_hora = consulta.get('fecha_hora')
@@ -84,19 +79,11 @@ def get_demand_data_simple():
         if not daily_counts:
             return {'dates': [], 'values': []}
         
-        # Ordenar
         dates = sorted(daily_counts.keys())
         values = [daily_counts[d] for d in dates]
         
-        print(f"📈 Días con datos: {len(dates)}")
-        print(f"📊 Total: {sum(values)}")
-        print(f"📅 Rango: {dates[0]} hasta {dates[-1]}")
-        
-        return {
-            'dates': dates,
-            'values': values
-        }
+        return {'dates': dates, 'values': values}
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Error en get_demand_data: {e}")
         return {'dates': [], 'values': []}
