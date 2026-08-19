@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import json
 
-db = getattr(settings, 'mongo_db', None)
+# Usar la misma variable db que en las vistas
+db = getattr(settings, 'MONGO_DB', None)  # <--- CAMBIO IMPORTANTE
 
 class ReportService:
     """Servicios para reportes."""
@@ -15,7 +16,7 @@ class ReportService:
     def generate_appointments_report(fecha_inicio=None, fecha_fin=None):
         """Generar reporte de citas."""
         if db is None:
-            return None
+            return {'data': [], 'stats': {'total': 0}}
         
         try:
             query = {}
@@ -42,7 +43,7 @@ class ReportService:
             return {'data': [], 'stats': {'total': 0}}
         except Exception as e:
             print(f"Error en generate_appointments_report: {e}")
-            return None
+            return {'data': [], 'stats': {'total': 0}}
     
     @staticmethod
     def generate_occupancy_report():

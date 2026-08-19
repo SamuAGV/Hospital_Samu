@@ -16,6 +16,31 @@
         </div>
     </div>
 
+    <!-- Filtros y Buscador -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Área / Especialidad</label>
+                    <input type="text" name="area" class="form-control" placeholder="Ej: Cardiología" value="{{ area|default:'' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Filtrar y Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="metric-card card-blue">
